@@ -10,7 +10,7 @@ import ErrorMessage from '../components/shared/ErrorMessage';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import EmptyState from '../components/shared/EmptyState';
 import { generateLetter } from '../utils/claudeApi';
-import { exportLetterToPDF } from '../utils/pdfExport';
+import { exportLetterToPDF, exportBatchLettersPDF } from '../utils/pdfExport';
 import { loadAllDeals, loadUserProfile, saveLetter, generateId } from '../utils/storage';
 import { formatMoney } from '../utils/calculations';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +27,11 @@ export default function LetterGen() {
   const [generatedLetter, setGeneratedLetter] = useState('');
   const [editedLetter, setEditedLetter] = useState('');
   const [userProfile, setUserProfile] = useState(null);
+
+  // Batch generation state
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  const [batchLetters, setBatchLetters] = useState([]);
 
   // --- Load deals and user profile on mount ---
   useEffect(() => {
@@ -120,6 +125,71 @@ export default function LetterGen() {
 
     const ownerName = selectedDeal?.owner?.name?.replace(/\s+/g, '_') || 'letter';
     exportLetterToPDF(letter, `letter_${ownerName}`);
+  }
+
+  // --- Batch generate letters for all deals ---
+  async function handleBatchGenerate() {
+    setError('');
+    setBatchLetters([]);
+
+    if (!userProfile || !userProfile.your_name) {
+      setError('Please fill in your business profile on the Settings page before generating letters.');
+      return;
+    }
+
+    const eligibleDeals = deals.filter((d) => d.owner?.name && d.pipeline_stage !== 'dead');
+    if (eligibleDeals.length === 0) {
+      setError('No eligible deals found for batch generation.');
+      return;
+    }
+
+    setBatchLoading(true);
+    setBatchProgress({ current: 0, total: eligibleDeals.length });
+    console.log('📦 Batch generating letters for', eligibleDeals.length, 'deals');
+
+    const generated = [];
+    for (let i = 0; i < eligibleDeals.length; i++) {
+      const deal = eligibleDeals[i];
+      setBatchProgress({ current: i + 1, total: eligibleDeals.length });
+
+      try {
+        const text = await generateLetter(letterType, deal, userProfile);
+        const fromAddress = [userProfile.mailing_address, userProfile.city, userProfile.state, userProfile.zip]
+          .filter(Boolean).join(', ');
+
+        const letterObj = {
+          id: generateId('letter'),
+          created_at: new Date().toISOString(),
+          deal_id: deal.id,
+          letter_type: letterType,
+          from_name: userProfile.your_name,
+          from_company: userProfile.company_name || '',
+          from_address: fromAddress,
+          from_phone: userProfile.phone || '',
+          offer_price: deal.offer?.locked_offer || 0,
+          body_text: text,
+          status: 'draft',
+          printed: false,
+          mailed_date: null,
+        };
+
+        saveLetter(letterObj);
+        generated.push(letterObj);
+        console.log(`✅ Letter ${i + 1}/${eligibleDeals.length} generated for ${deal.owner.name}`);
+      } catch (err) {
+        console.error(`❌ Failed to generate letter for ${deal.owner?.name}:`, err);
+      }
+    }
+
+    setBatchLetters(generated);
+    setBatchLoading(false);
+    console.log('📦 Batch complete:', generated.length, 'letters generated');
+  }
+
+  // --- Export batch letters as single PDF ---
+  function handleExportBatchPDF() {
+    if (batchLetters.length === 0) return;
+    exportBatchLettersPDF(batchLetters, `batch_letters_${new Date().toISOString().slice(0, 10)}`);
   }
 
   // --- Render ---
@@ -253,6 +323,57 @@ export default function LetterGen() {
                 </p>
               </div>
             )}
+            {/* --- Batch Letter Generation --- */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+              <h2 className="text-lg font-bold text-gray-900">Batch Letter Generation</h2>
+              <p className="text-sm text-gray-500">
+                Generate {letterType === 'blind_offer' ? 'Blind Offer' : 'Neutral'} letters for all
+                eligible deals at once ({deals.filter((d) => d.owner?.name && d.pipeline_stage !== 'dead').length} deals).
+              </p>
+
+              {/* Batch progress */}
+              {batchLoading && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Generating letter {batchProgress.current} of {batchProgress.total}...</span>
+                    <span>{Math.round((batchProgress.current / batchProgress.total) * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all"
+                      style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Batch results */}
+              {batchLetters.length > 0 && !batchLoading && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-green-800 font-medium">
+                    ✅ {batchLetters.length} letters generated and saved successfully!
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleBatchGenerate}
+                  disabled={batchLoading || deals.length === 0 || !userProfile?.your_name}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {batchLoading ? `⏳ Generating ${batchProgress.current}/${batchProgress.total}...` : '📦 Generate All Letters'}
+                </button>
+                {batchLetters.length > 0 && (
+                  <button
+                    onClick={handleExportBatchPDF}
+                    className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-lg transition-colors"
+                  >
+                    📄 Export All as PDF
+                  </button>
+                )}
+              </div>
+            </div>
           </>
         )}
       </PageWrapper>

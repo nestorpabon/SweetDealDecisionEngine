@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import PageWrapper from '../components/Layout/PageWrapper';
 import TopBar from '../components/Layout/TopBar';
 import ErrorMessage from '../components/shared/ErrorMessage';
-import { saveUserProfile, loadUserProfile } from '../utils/storage';
+import { saveUserProfile, loadUserProfile, exportAllData, importAllData } from '../utils/storage';
 
 // Default empty profile shape
 const EMPTY_PROFILE = {
@@ -288,6 +288,66 @@ export default function Settings() {
             </button>
           </div>
         </form>
+
+        {/* --- Data Backup & Restore Card --- */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Data Backup & Restore</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Download all your data as a JSON file, or restore from a previous backup.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            {/* Download backup */}
+            <button
+              type="button"
+              onClick={() => {
+                const data = exportAllData();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `sdde_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                console.log('⬇️ Backup downloaded');
+              }}
+              className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-lg transition-colors"
+            >
+              📦 Download All My Data
+            </button>
+
+            {/* Upload restore */}
+            <label className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-lg transition-colors cursor-pointer">
+              📥 Upload Backup
+              <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    try {
+                      const backup = JSON.parse(ev.target.result);
+                      const count = importAllData(backup);
+                      setSaved(false);
+                      setError('');
+                      alert(`Restored ${count} data entries successfully. Refresh the page to see changes.`);
+                    } catch {
+                      setError('Invalid backup file. Please select a valid .json backup file.');
+                    }
+                  };
+                  reader.readAsText(file);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-3">
+            Backup includes all deals, markets, property lists, letters, and calculations.
+          </p>
+        </div>
       </PageWrapper>
     </>
   );

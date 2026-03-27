@@ -11,6 +11,7 @@ import ConfirmModal from '../components/shared/ConfirmModal';
 import { loadAllDeals, saveDeal, deleteDeal, generateId } from '../utils/storage';
 import { PIPELINE_STAGES, getStageByKey } from '../constants/pipelineStages';
 import { formatMoney } from '../utils/calculations';
+import { downloadCSV } from '../utils/csvParser';
 
 // --- Deal Detail Modal Component ---
 // Shows full deal info and allows editing all fields
@@ -409,6 +410,32 @@ export default function DealTracker() {
                 List
               </button>
             </div>
+            <button
+              onClick={() => {
+                if (deals.length === 0) return;
+                const rows = deals.map((d) => ({
+                  Owner: d.owner?.name || '',
+                  Property: d.property?.address || '',
+                  County: d.property?.county || '',
+                  State: d.property?.state || '',
+                  Acres: d.property?.acres || '',
+                  'Assessed Value': d.property?.assessed_value || '',
+                  'Offer Price': d.offer?.locked_offer || '',
+                  Stage: d.pipeline_stage || '',
+                  Strategy: d.selling_strategy || '',
+                  Notes: d.notes || '',
+                }));
+                const header = Object.keys(rows[0]).join(',');
+                const csv = header + '\n' + rows.map((r) =>
+                  Object.values(r).map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')
+                ).join('\n');
+                downloadCSV(csv, `deals_export_${new Date().toISOString().slice(0, 10)}.csv`);
+              }}
+              disabled={deals.length === 0}
+              className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-40"
+            >
+              📥 Export CSV
+            </button>
             <button onClick={() => setShowAddModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
               + Add Deal
             </button>
