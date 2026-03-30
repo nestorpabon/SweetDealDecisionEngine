@@ -51,7 +51,11 @@
   2. Settings page shows one of three statuses next to the key field: "Not set", "Valid", or "Invalid"
   3. All three AI modules (Market Finder, Letter Gen, Buyer Profile) use the key stored in Settings
   4. When an AI module fails due to a missing or invalid key, the error message says to go to Settings and add the key — no mention of .env files
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — API key card in Settings UI + claudeApi.js reads from localStorage (API-01, API-02, API-03)
+- [ ] 07-02-PLAN.md — Rewrite .env-referencing error strings in claudeApi.js (API-04)
 
 ### Phase 8: Demo Data System
 **Goal**: Users can load a full set of realistic sample data into every module with one click, and wipe it clean just as easily
@@ -96,7 +100,7 @@
 | 4. AI Modules | v1.0 | - | Complete | 2026-03-30 |
 | 5. Profit Calculators | v1.0 | - | Complete | 2026-03-30 |
 | 6. Polish & Export | v1.0 | - | Complete | 2026-03-30 |
-| 7. API Key Settings | v1.1 | 0/? | Not started | - |
+| 7. API Key Settings | v1.1 | 0/2 | In progress | - |
 | 8. Demo Data System | v1.1 | 0/? | Not started | - |
 | 9. Module Polish | v1.1 | 0/? | Not started | - |
 | 10. End-to-End QA | v1.1 | 0/? | Not started | - |
