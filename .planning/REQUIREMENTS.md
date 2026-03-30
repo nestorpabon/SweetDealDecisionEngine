@@ -9,9 +9,9 @@ Requirements for demo-ready milestone. Each maps to roadmap phases.
 
 ### API Configuration
 
-- [ ] **API-01**: User can enter and save their Claude API key in the Settings page UI
-- [ ] **API-02**: App reads Claude API key from Settings (localStorage) instead of .env file
-- [ ] **API-03**: Settings page shows API key validation status (valid / invalid / not set)
+- [x] **API-01**: User can enter and save their Claude API key in the Settings page UI
+- [x] **API-02**: App reads Claude API key from Settings (localStorage) instead of .env file
+- [x] **API-03**: Settings page shows API key validation status (valid / invalid / not set)
 - [ ] **API-04**: AI module error messages guide user to Settings to add API key (no .env jargon)
 
 ### Demo Data
@@ -66,9 +66,9 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| API-01 | Phase 7 | Pending |
-| API-02 | Phase 7 | Pending |
-| API-03 | Phase 7 | Pending |
+| API-01 | Phase 7 | Complete |
+| API-02 | Phase 7 | Complete |
+| API-03 | Phase 7 | Complete |
 | API-04 | Phase 7 | Pending |
 | DEMO-01 | Phase 8 | Pending |
 | DEMO-02 | Phase 8 | Pending |

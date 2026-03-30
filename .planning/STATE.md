@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.1
+milestone_name: Demo-Ready
+status: planning
+stopped_at: Completed 07-01-PLAN.md — awaiting human-verify checkpoint
+last_updated: "2026-03-30T23:54:27.540Z"
+last_activity: 2026-03-30 — v1.1 roadmap created (Phases 7-10)
+progress:
+  total_phases: 10
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 50
+---
+
 # Project State
 
 ## Project Reference
@@ -14,7 +30,7 @@ Plan: 0 of ? in current phase
 Status: Ready to plan
 Last activity: 2026-03-30 — v1.1 roadmap created (Phases 7-10)
 
-Progress: [██████░░░░] 60% (v1.0 complete, v1.1 starting)
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -34,6 +50,7 @@ Progress: [██████░░░░] 60% (v1.0 complete, v1.1 starting)
 - Trend: n/a
 
 *Updated after each plan completion*
+| Phase 07-api-key-settings P01 | 15 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -42,6 +59,8 @@ Progress: [██████░░░░] 60% (v1.0 complete, v1.1 starting)
 - [v1.1]: API key moves from VITE_ANTHROPIC_API_KEY env var to Settings UI — required for demo distribution
 - [v1.1]: Demo data system must be idempotent — "Load Demo Data" resets to same state on every click
 - [v1.0]: localStorage only — no backend, no auth, single-user MVP
+- [Phase 07-api-key-settings]: API key stored in lpg_settings separate from user profile to prevent profile saves clobbering it
+- [Phase 07-api-key-settings]: getApiKey() checks localStorage first, env var second — enables demo users without .env file
 
 ### Pending Todos
 
@@ -54,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Roadmap created for v1.1 (Phases 7-10). No plans written yet.
+Last session: 2026-03-30T23:54:27.535Z
+Stopped at: Completed 07-01-PLAN.md — awaiting human-verify checkpoint
 Resume file: None
