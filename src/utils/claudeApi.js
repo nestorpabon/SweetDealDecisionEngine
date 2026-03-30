@@ -43,7 +43,7 @@ async function callClaude(systemPrompt, userPrompt) {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error(
-      'Claude API key not configured. Go to Settings and add your API key, or create a .env file with VITE_ANTHROPIC_API_KEY=your_key_here'
+      'Claude API key not configured. Go to Settings and add your Claude API key to enable AI features.'
     );
   }
 
@@ -71,7 +71,7 @@ async function callClaude(systemPrompt, userPrompt) {
   if (!response.ok) {
     const status = response.status;
     if (status === 401) {
-      throw new Error('Invalid API key. Please check your Anthropic API key in the .env file.');
+      throw new Error('Invalid API key. Please check your Claude API key in Settings — it may be invalid or expired.');
     } else if (status === 429) {
       throw new Error('API rate limit reached. Please wait a moment and try again.');
     } else if (status === 500 || status === 503) {
