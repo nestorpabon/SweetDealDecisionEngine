@@ -1,8 +1,9 @@
 // All Anthropic Claude API calls for the Sweet Deal Decision Engine
 // NEVER call fetch directly in components — always use these functions
-// API key is read from the VITE_ANTHROPIC_API_KEY environment variable
+// API key is read from localStorage (lpg_settings) first, then VITE_ANTHROPIC_API_KEY env var
 
 import { PROPERTY_TYPES } from '../constants/filterOptions';
+import { loadSettings } from './storage';
 
 // The Claude model used for all AI calls
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
@@ -11,15 +12,24 @@ const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
 /**
- * Get the API key from environment variables
- * Returns null if not configured
+ * Get the Claude API key — checks Settings (localStorage) first, then env var
+ * Settings key takes priority so users can configure via UI without a .env file
+ * Returns null if no key is configured anywhere
  */
 function getApiKey() {
-  const key = import.meta.env.VITE_ANTHROPIC_API_KEY;
-  if (!key || key === 'your_api_key_here') {
-    return null;
+  // Check Settings (UI-configured) first — this is the primary path for demo users
+  const settings = loadSettings();
+  if (settings?.claude_api_key && settings.claude_api_key.trim() !== '') {
+    console.log('🔑 Using API key from Settings');
+    return settings.claude_api_key.trim();
   }
-  return key;
+  // Fall back to Vite env var — developer and self-hosted deployment path
+  const envKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+  if (envKey && envKey !== 'your_api_key_here') {
+    console.log('🔑 Using API key from .env');
+    return envKey;
+  }
+  return null;
 }
 
 /**
