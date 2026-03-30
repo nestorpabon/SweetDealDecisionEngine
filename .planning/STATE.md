@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Demo-Ready
 status: planning
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-30T23:58:00.931Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-03-30T23:59:46.661Z"
 last_activity: 2026-03-30 — v1.1 roadmap created (Phases 7-10)
 progress:
   total_phases: 10
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 50
 ---
 
@@ -51,6 +51,7 @@ Progress: [█████░░░░░] 50%
 
 *Updated after each plan completion*
 | Phase 07-api-key-settings P01 | 15 | 2 tasks | 2 files |
+| Phase 07-api-key-settings P02 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,7 @@ Progress: [█████░░░░░] 50%
 - [Phase 07-api-key-settings]: API key stored in lpg_settings separate from user profile to prevent profile saves clobbering it
 - [Phase 07-api-key-settings]: getApiKey() checks localStorage first, env var second — enables demo users without .env file
 - [Phase Phase 07-api-key-settings]: API key stored in lpg_settings.claude_api_key, separate from lpg_user_profile — avoids profile save clobbering key
+- [Phase 07-api-key-settings]: Error messages reference Settings UI path, not .env files — demo users have no .env
 
 ### Pending Todos
 
@@ -74,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T23:57:55.800Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-30T23:59:46.657Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
