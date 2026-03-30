@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import PageWrapper from '../components/Layout/PageWrapper';
 import TopBar from '../components/Layout/TopBar';
 import ErrorMessage from '../components/shared/ErrorMessage';
-import { saveUserProfile, loadUserProfile, exportAllData, importAllData } from '../utils/storage';
+import { saveUserProfile, loadUserProfile, exportAllData, importAllData, loadSettings, saveSettings } from '../utils/storage';
 
 // Default empty profile shape
 const EMPTY_PROFILE = {
@@ -30,15 +30,27 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
-  // --- Load existing profile on mount ---
+  // API key state — separate from user profile, stored in lpg_settings
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState('');
+
+  // --- Load existing profile and API key on mount ---
   useEffect(() => {
-    console.log('⚙️ Loading user profile...');
+    console.log('⚙️ Loading user profile and settings...');
     const existing = loadUserProfile();
     if (existing) {
       setProfile(existing);
       console.log('✅ Profile loaded:', existing.your_name);
     } else {
       console.log('📝 No profile found — starting fresh');
+    }
+    // Load saved API key from lpg_settings
+    const settings = loadSettings();
+    if (settings?.claude_api_key) {
+      setApiKey(settings.claude_api_key);
+      console.log('🔑 API key loaded from settings');
     }
   }, []);
 
@@ -67,6 +79,36 @@ export default function Settings() {
       console.log('✅ Profile saved successfully');
     } else {
       setError('Could not save profile. Your browser may be blocking localStorage. Check your privacy settings.');
+    }
+  }
+
+  /**
+   * Compute the display status of the API key based on its format
+   * Does NOT make a live API call — format check only
+   */
+  function getKeyStatus(key) {
+    if (!key || key.trim() === '') return 'not_set';
+    if (key.trim().startsWith('sk-ant-')) return 'valid';
+    return 'invalid';
+  }
+
+  /**
+   * Save the API key to lpg_settings (separate from user profile)
+   * Key is stored under claude_api_key inside the settings object
+   */
+  function handleSaveApiKey() {
+    setApiKeyError('');
+    const trimmed = apiKey.trim();
+    // Merge with existing settings to avoid overwriting other settings keys
+    const existing = loadSettings() || {};
+    const success = saveSettings({ ...existing, claude_api_key: trimmed });
+    if (success) {
+      setApiKeySaved(true);
+      console.log('✅ API key saved to lpg_settings');
+      // Clear the saved confirmation after 3 seconds
+      setTimeout(() => setApiKeySaved(false), 3000);
+    } else {
+      setApiKeyError('Could not save API key. Your browser may be blocking localStorage. Check your privacy settings.');
     }
   }
 
@@ -288,6 +330,73 @@ export default function Settings() {
             </button>
           </div>
         </form>
+
+        {/* --- Claude API Key Card --- */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Claude AI API Key</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Required for Market Finder, Letter Generation, and Buyer Profile features.
+            Get your key at{' '}
+            <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              console.anthropic.com
+            </a>
+            .
+          </p>
+
+          {/* API key error */}
+          {apiKeyError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-lg p-3 text-sm">
+              {apiKeyError}
+            </div>
+          )}
+
+          {/* API key success confirmation */}
+          {apiKeySaved && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-800 rounded-lg p-3 text-sm">
+              API key saved successfully.
+            </div>
+          )}
+
+          {/* Input row */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 relative">
+              <input
+                type={showApiKey ? 'text' : 'password'}
+                value={apiKey}
+                onChange={(e) => { setApiKey(e.target.value); setApiKeySaved(false); }}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="sk-ant-api03-..."
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowApiKey((v) => !v)}
+              className="border border-gray-300 hover:bg-gray-50 text-gray-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap"
+            >
+              {showApiKey ? 'Hide' : 'Show'}
+            </button>
+          </div>
+
+          {/* Status badge + save button row */}
+          <div className="flex items-center justify-between">
+            {/* Status badge — computed from live input value */}
+            <div className="text-sm">
+              {(() => {
+                const status = getKeyStatus(apiKey);
+                if (status === 'not_set') return <span className="text-gray-400">Not set</span>;
+                if (status === 'valid')   return <span className="text-green-600 font-medium">Looks valid</span>;
+                return <span className="text-red-600 font-medium">Invalid format — keys start with sk-ant-</span>;
+              })()}
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveApiKey}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
+            >
+              Save Key
+            </button>
+          </div>
+        </div>
 
         {/* --- Data Backup & Restore Card --- */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
