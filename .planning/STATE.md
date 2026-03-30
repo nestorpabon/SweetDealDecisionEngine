@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Demo-Ready
 status: planning
-stopped_at: Completed 07-01-PLAN.md — awaiting human-verify checkpoint
-last_updated: "2026-03-30T23:54:27.540Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-30T23:58:00.931Z"
 last_activity: 2026-03-30 — v1.1 roadmap created (Phases 7-10)
 progress:
   total_phases: 10
@@ -61,6 +61,7 @@ Progress: [█████░░░░░] 50%
 - [v1.0]: localStorage only — no backend, no auth, single-user MVP
 - [Phase 07-api-key-settings]: API key stored in lpg_settings separate from user profile to prevent profile saves clobbering it
 - [Phase 07-api-key-settings]: getApiKey() checks localStorage first, env var second — enables demo users without .env file
+- [Phase Phase 07-api-key-settings]: API key stored in lpg_settings.claude_api_key, separate from lpg_user_profile — avoids profile save clobbering key
 
 ### Pending Todos
 
@@ -73,6 +74,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T23:54:27.535Z
-Stopped at: Completed 07-01-PLAN.md — awaiting human-verify checkpoint
+Last session: 2026-03-30T23:57:55.800Z
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
