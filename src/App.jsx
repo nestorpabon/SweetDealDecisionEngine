@@ -3,7 +3,7 @@
 // First-time users are redirected to Settings to set up their profile
 // SidebarContext enables mobile drawer open/close without prop drilling through pages
 
-import { BrowserRouter, Routes, Route, Navigate, createContext } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Sidebar from './components/Layout/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -17,9 +17,7 @@ import ProfitCalc from './pages/ProfitCalc';
 import BuyerProfile from './pages/BuyerProfile';
 import Settings from './pages/Settings';
 import { loadUserProfile } from './utils/storage';
-
-// SidebarContext for mobile drawer state — allows TopBar and Sidebar to sync without prop drilling
-export const SidebarContext = createContext({ open: false, toggle: () => {}, close: () => {} });
+import { SidebarContext } from './contexts/SidebarContext';
 
 export default function App() {
   // Check if user has completed onboarding (has a profile with name)

@@ -4,7 +4,7 @@
 
 import { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
-import { SidebarContext } from '../../App';
+import { SidebarContext } from '../../contexts/SidebarContext';
 
 // Navigation items — each maps to a page/module in the app
 const NAV_ITEMS = [

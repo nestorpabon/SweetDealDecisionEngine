@@ -4,7 +4,7 @@
 
 import { useContext } from 'react';
 import { loadUserProfile } from '../../utils/storage';
-import { SidebarContext } from '../../App';
+import { SidebarContext } from '../../contexts/SidebarContext';
 
 export default function TopBar({ title }) {
   // Load the user profile to display their name
