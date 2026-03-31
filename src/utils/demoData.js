@@ -1,0 +1,617 @@
+// Demo data utility for the Sweet Deal Decision Engine
+// Provides seedDemoData() and clearAllData() for the Settings page demo mode
+// All seed content uses realistic NC land deal data (Blue Ridge Land Co. persona)
+
+import {
+  saveUserProfile,
+  saveMarket,
+  savePropertyList,
+  saveRawData,
+  saveFilteredList,
+  saveDeal,
+  saveLetter,
+  loadSettings,
+  saveSettings,
+} from './storage';
+
+// --- DEMO USER PROFILE ---
+// Fictional Raleigh NC land investor persona used across all demo letters and modules
+const DEMO_USER_PROFILE = {
+  your_name: 'Sarah Calloway',
+  company_name: 'Blue Ridge Land Co.',
+  mailing_address: '412 Glenwood Ave Suite 201',
+  city: 'Raleigh',
+  state: 'NC',
+  zip: '27603',
+  phone: '(919) 555-0142',
+  email: 'sarah@blueridgeland.com',
+  website: 'https://blueridgeland.com',
+  default_offer_pct: 0.10,
+  default_letter_type: 'blind_offer',
+  default_interest_rate: 0.10,
+  default_loan_term_years: 10,
+};
+
+// --- DEMO TARGET MARKETS ---
+// Market 1: Chatham County NC — Research Triangle spillover market
+const DEMO_MARKET_CHATHAM = {
+  id: 'demo_market_001',
+  created_at: '2026-01-15T09:00:00Z',
+  state: 'North Carolina',
+  metro_area: 'Raleigh-Durham',
+  target_counties: [
+    {
+      county_name: 'Chatham County',
+      state: 'NC',
+      growth_score: 8.2,
+      why_recommended:
+        'Chatham County sits directly southwest of the Research Triangle, capturing spillover demand from Durham and Chapel Hill. Land prices remain 40-60% below Orange County comparables while experiencing rapid population growth from RTP tech worker migration. Out-of-state heirs are highly motivated sellers who inherited rural parcels they have never visited.',
+      property_types_best_for: ['outskirts_1_10_ac'],
+      assessor_website:
+        'https://www.chathamcountync.gov/government/departments-programs/tax-office',
+      notes:
+        'Strong demand from homesteaders and RTP workers seeking rural retreats within 45 minutes of downtown Raleigh.',
+    },
+  ],
+  property_type_preference: 'outskirts_1_10_ac',
+  status: 'active',
+};
+
+// Market 2: Yavapai County AZ — Jack Bosch home territory
+const DEMO_MARKET_YAVAPAI = {
+  id: 'demo_market_002',
+  created_at: '2026-01-20T14:30:00Z',
+  state: 'Arizona',
+  metro_area: 'Prescott',
+  target_counties: [
+    {
+      county_name: 'Yavapai County',
+      state: 'AZ',
+      growth_score: 9.1,
+      why_recommended:
+        'Yavapai County is the heartland of the Arizona land flipping market. Prescott is one of the fastest-growing metros in the US, driven by Phoenix residents seeking cooler elevations at 5,300 feet. High volume of out-of-state heirs who inherited rural parcels from the 1970s land boom and are eager to liquidate.',
+      property_types_best_for: ['outskirts_1_10_ac', 'rural_10_100_ac'],
+      assessor_website: 'https://www.assessor.yavapai.gov',
+      notes:
+        'Deep buyer market — Phoenix and Scottsdale investors actively seeking Prescott-area land. Jack Bosch home territory.',
+    },
+  ],
+  property_type_preference: 'outskirts_1_10_ac',
+  status: 'active',
+};
+
+const DEMO_MARKETS = [DEMO_MARKET_CHATHAM, DEMO_MARKET_YAVAPAI];
+
+// --- DEMO PROPERTY LIST (metadata) ---
+// One list upload from Chatham County NC assessor
+// CRITICAL: column_mapping values (right side) must match the keys used in DEMO_RAW_PROPERTIES
+const DEMO_PROPERTY_LIST = {
+  id: 'demo_list_001',
+  created_at: '2026-01-28T10:00:00Z',
+  county_name: 'Chatham County',
+  state: 'NC',
+  source: 'Chatham County Tax Office Download',
+  total_records: 3847,
+  column_mapping: {
+    parcel_id: 'APN',
+    owner_name: 'Owner Name',
+    owner_address: 'Mailing Address',
+    owner_city: 'Mailing City',
+    owner_state: 'Mailing State',
+    property_address: 'Situs Address',
+    acres: 'Land Size (AC)',
+    assessed_value: 'Total Assessed Value',
+    zoning: 'Zoning Code',
+    tax_status: 'Tax Current',
+  },
+  raw_data_key: 'lpg_rawdata_demo_list_001',
+};
+
+// --- DEMO RAW PROPERTIES ---
+// 16 properties — keys MUST match column_mapping values (the right side / CSV header names)
+// ~10 pass typical filters (out-of-state owner, individual name, 1-10 acres, AG/VL zoning)
+// ~6 fail filters (in-state NC owner, LLC name, <1 acre, or assessed value >$100K)
+const DEMO_RAW_PROPERTIES = [
+  // PASS — out-of-state individual owners, 1-10 AC, AG zoning
+  { 'APN': '0078-35-2941', 'Owner Name': 'Robert L. Whitfield', 'Mailing Address': '3821 Timber Creek Dr', 'Mailing City': 'Richmond', 'Mailing State': 'VA', 'Situs Address': '0 Old Pittsboro Rd, Pittsboro NC 27312', 'Land Size (AC)': 4.8, 'Total Assessed Value': 38400, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0081-12-4409', 'Owner Name': 'Patricia A. Monroe', 'Mailing Address': '542 Oleander Dr', 'Mailing City': 'Tampa', 'Mailing State': 'FL', 'Situs Address': '0 Moncure-Flatwood Rd, Moncure NC 27559', 'Land Size (AC)': 2.3, 'Total Assessed Value': 18400, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0091-07-8812', 'Owner Name': 'James T. Calloway', 'Mailing Address': '1109 Mockingbird Ln', 'Mailing City': 'Austin', 'Mailing State': 'TX', 'Situs Address': '0 Silk Hope Rd, Siler City NC 27344', 'Land Size (AC)': 6.1, 'Total Assessed Value': 48800, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0065-22-3307', 'Owner Name': 'Helen M. Draper', 'Mailing Address': '27 Maple Ave', 'Mailing City': 'Columbus', 'Mailing State': 'OH', 'Situs Address': '0 Big Woods Rd, Pittsboro NC 27312', 'Land Size (AC)': 3.5, 'Total Assessed Value': 28000, 'Zoning Code': 'VL', 'Tax Current': 'Yes' },
+  { 'APN': '0054-41-9920', 'Owner Name': 'George A. Pendleton', 'Mailing Address': '88 Harbor View Ct', 'Mailing City': 'Charleston', 'Mailing State': 'SC', 'Situs Address': '0 Farrington Rd, Chapel Hill NC 27517', 'Land Size (AC)': 1.9, 'Total Assessed Value': 15200, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0103-18-6651', 'Owner Name': 'Dorothy B. Sutton', 'Mailing Address': '4430 Park Blvd', 'Mailing City': 'Nashville', 'Mailing State': 'TN', 'Situs Address': '0 Lystra Rd, Chapel Hill NC 27517', 'Land Size (AC)': 7.2, 'Total Assessed Value': 57600, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0072-55-1143', 'Owner Name': 'Frank R. Bellamy', 'Mailing Address': '210 Sunset Strip', 'Mailing City': 'Atlanta', 'Mailing State': 'GA', 'Situs Address': '0 Corinth Rd, Pittsboro NC 27312', 'Land Size (AC)': 5.4, 'Total Assessed Value': 43200, 'Zoning Code': 'VL', 'Tax Current': 'Yes' },
+  { 'APN': '0088-09-7732', 'Owner Name': 'Margaret L. Horne', 'Mailing Address': '1742 Chestnut St', 'Mailing City': 'Philadelphia', 'Mailing State': 'PA', 'Situs Address': '0 Mount Gilead Church Rd, Pittsboro NC 27312', 'Land Size (AC)': 2.7, 'Total Assessed Value': 21600, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0115-33-4489', 'Owner Name': 'Charles W. Ingram', 'Mailing Address': '690 Bayshore Dr', 'Mailing City': 'Sarasota', 'Mailing State': 'FL', 'Situs Address': '0 Thompson Store Rd, Merry Oaks NC 27355', 'Land Size (AC)': 8.5, 'Total Assessed Value': 68000, 'Zoning Code': 'AG', 'Tax Current': 'No' },
+  { 'APN': '0060-47-2218', 'Owner Name': 'Nancy J. Crosswell', 'Mailing Address': '3317 Westlake Ave', 'Mailing City': 'Seattle', 'Mailing State': 'WA', 'Situs Address': '0 Pea Ridge Rd, Bear Creek NC 27207', 'Land Size (AC)': 3.1, 'Total Assessed Value': 24800, 'Zoning Code': 'VL', 'Tax Current': 'Yes' },
+  // FAIL — in-state NC owners (filter for out-of-state removes these)
+  { 'APN': '0049-88-5571', 'Owner Name': 'William T. Dixon', 'Mailing Address': '215 Fayetteville St', 'Mailing City': 'Raleigh', 'Mailing State': 'NC', 'Situs Address': '0 Bonlee Rd, Bonlee NC 27213', 'Land Size (AC)': 2.0, 'Total Assessed Value': 16000, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0037-62-8840', 'Owner Name': 'Susan R. Parks', 'Mailing Address': '800 West Ave', 'Mailing City': 'Durham', 'Mailing State': 'NC', 'Situs Address': '0 Old Graham Rd, Moncure NC 27559', 'Land Size (AC)': 4.1, 'Total Assessed Value': 32800, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  // FAIL — company/LLC owned
+  { 'APN': '0095-14-3369', 'Owner Name': 'Piedmont Timberland LLC', 'Mailing Address': 'PO Box 4400', 'Mailing City': 'Greensboro', 'Mailing State': 'NC', 'Situs Address': '0 Deep River Rd, Goldston NC 27252', 'Land Size (AC)': 9.8, 'Total Assessed Value': 78400, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+  { 'APN': '0043-29-7104', 'Owner Name': 'Triangle Land Holdings LLC', 'Mailing Address': '101 N Tryon St', 'Mailing City': 'Charlotte', 'Mailing State': 'NC', 'Situs Address': '0 Briar Chapel Pkwy, Chapel Hill NC 27517', 'Land Size (AC)': 6.3, 'Total Assessed Value': 88200, 'Zoning Code': 'VL', 'Tax Current': 'Yes' },
+  // FAIL — too small (under 1 acre)
+  { 'APN': '0101-77-2256', 'Owner Name': 'Thomas A. Mercer', 'Mailing Address': '4400 Peach St', 'Mailing City': 'Louisville', 'Mailing State': 'KY', 'Situs Address': '0 Gulf Rd, Pittsboro NC 27312', 'Land Size (AC)': 0.4, 'Total Assessed Value': 3200, 'Zoning Code': 'RES-VAC', 'Tax Current': 'Yes' },
+  // FAIL — assessed value over max threshold
+  { 'APN': '0058-93-1118', 'Owner Name': 'Barbara L. Stanton', 'Mailing Address': '2211 Magnolia Blvd', 'Mailing City': 'Baton Rouge', 'Mailing State': 'LA', 'Situs Address': '0 Jack Bennett Rd, Pittsboro NC 27312', 'Land Size (AC)': 9.2, 'Total Assessed Value': 110400, 'Zoning Code': 'AG', 'Tax Current': 'Yes' },
+];
+
+// --- DEMO FILTERED LIST ---
+// Result of applying standard filters to the property list above
+// ~10 properties pass (out-of-state individual owner, 1-10 AC, AG/VL, $10K-$90K)
+const DEMO_FILTERED_LIST = {
+  id: 'demo_filtered_001',
+  created_at: '2026-01-28T10:45:00Z',
+  source_list_id: 'demo_list_001',
+  filters_applied: {
+    min_acres: 1,
+    max_acres: 10,
+    owner_out_of_state: true,
+    owner_is_individual: true,
+    min_assessed_value: 10000,
+    max_assessed_value: 90000,
+    tax_status: 'any',
+    zoning_codes: ['AG', 'VL', 'RES-VAC'],
+  },
+  original_count: 3847,
+  filtered_count: 10,
+  removed_breakdown: {
+    wrong_size: 1840,
+    in_state_owner: 1200,
+    company_owned: 620,
+    out_of_value_range: 187,
+  },
+  filtered_data_key: 'lpg_filtered_demo_filtered_001',
+};
+
+// --- DEMO DEALS ---
+// 6 deals across the full pipeline — tells a coherent investor story
+// deal_006 is the closed win with full profit data for ProfitCalc and Dashboard
+
+const DEMO_DEALS = [
+  // Deal 1: New Lead — just pulled from the filtered list
+  {
+    id: 'demo_deal_001',
+    created_at: '2026-02-03T09:15:00Z',
+    updated_at: '2026-02-03T09:15:00Z',
+    property: {
+      parcel_id: '0054-41-9920',
+      address: '0 Farrington Rd, Chapel Hill NC 27517',
+      county: 'Chatham County',
+      state: 'NC',
+      acres: 1.9,
+      zoning: 'AG',
+      assessed_value: 15200,
+      estimated_market_value: 20000,
+    },
+    owner: {
+      name: 'George A. Pendleton',
+      mailing_address: '88 Harbor View Ct',
+      city: 'Charleston',
+      state: 'SC',
+      zip: '29403',
+      phone: '',
+      email: '',
+    },
+    offer: {
+      min_offer: 760,
+      max_offer: 3800,
+      sweet_spot_offer: 1520,
+      locked_offer: 1520,
+      offer_pct_of_market: 0.10,
+    },
+    pipeline_stage: 'new_lead',
+    letter_type: 'blind_offer',
+    letter_sent_date: null,
+    selling_strategy: 'wholesale',
+    buy_details: { actual_purchase_price: null, closing_cost: null, total_cost: null, purchase_date: null },
+    sell_details: { asking_price: null, sale_price: null, sale_date: null, profit: null },
+    seller_financing_terms: null,
+    notes: 'Charleston SC owner — likely inherited from family. Never visited the property.',
+    status: 'active',
+  },
+
+  // Deal 2: Letter Sent (Blind Offer)
+  {
+    id: 'demo_deal_002',
+    created_at: '2026-02-05T11:00:00Z',
+    updated_at: '2026-02-07T08:30:00Z',
+    property: {
+      parcel_id: '0081-12-4409',
+      address: '0 Moncure-Flatwood Rd, Moncure NC 27559',
+      county: 'Chatham County',
+      state: 'NC',
+      acres: 2.3,
+      zoning: 'AG',
+      assessed_value: 18400,
+      estimated_market_value: 24000,
+    },
+    owner: {
+      name: 'Patricia A. Monroe',
+      mailing_address: '542 Oleander Dr',
+      city: 'Tampa',
+      state: 'FL',
+      zip: '33611',
+      phone: '',
+      email: '',
+    },
+    offer: {
+      min_offer: 920,
+      max_offer: 4600,
+      sweet_spot_offer: 1840,
+      locked_offer: 1840,
+      offer_pct_of_market: 0.10,
+    },
+    pipeline_stage: 'letter_sent',
+    letter_type: 'blind_offer',
+    letter_sent_date: '2026-02-07',
+    selling_strategy: 'wholesale',
+    buy_details: { actual_purchase_price: null, closing_cost: null, total_cost: null, purchase_date: null },
+    sell_details: { asking_price: null, sale_price: null, sale_date: null, profit: null },
+    seller_financing_terms: null,
+    notes: 'Tampa FL owner — blind offer letter mailed 2/7. Waiting on response.',
+    status: 'active',
+  },
+
+  // Deal 3: Letter Sent (Neutral)
+  {
+    id: 'demo_deal_003',
+    created_at: '2026-02-05T11:30:00Z',
+    updated_at: '2026-02-08T09:00:00Z',
+    property: {
+      parcel_id: '0065-22-3307',
+      address: '0 Big Woods Rd, Pittsboro NC 27312',
+      county: 'Chatham County',
+      state: 'NC',
+      acres: 3.5,
+      zoning: 'VL',
+      assessed_value: 28000,
+      estimated_market_value: 35000,
+    },
+    owner: {
+      name: 'Helen M. Draper',
+      mailing_address: '27 Maple Ave',
+      city: 'Columbus',
+      state: 'OH',
+      zip: '43201',
+      phone: '',
+      email: '',
+    },
+    offer: {
+      min_offer: 1400,
+      max_offer: 7000,
+      sweet_spot_offer: 2800,
+      locked_offer: 2800,
+      offer_pct_of_market: 0.10,
+    },
+    pipeline_stage: 'letter_sent',
+    letter_type: 'neutral',
+    letter_sent_date: '2026-02-08',
+    selling_strategy: 'seller_financing',
+    buy_details: { actual_purchase_price: null, closing_cost: null, total_cost: null, purchase_date: null },
+    sell_details: { asking_price: null, sale_price: null, sale_date: null, profit: null },
+    seller_financing_terms: null,
+    notes: 'Columbus OH owner. Neutral inquiry letter sent. 3.5 acres with road frontage on Big Woods Rd.',
+    status: 'active',
+  },
+
+  // Deal 4: Negotiating — seller called back and countered
+  {
+    id: 'demo_deal_004',
+    created_at: '2026-01-30T14:00:00Z',
+    updated_at: '2026-02-20T10:15:00Z',
+    property: {
+      parcel_id: '0091-07-8812',
+      address: '0 Silk Hope Rd, Siler City NC 27344',
+      county: 'Chatham County',
+      state: 'NC',
+      acres: 6.1,
+      zoning: 'AG',
+      assessed_value: 48800,
+      estimated_market_value: 62000,
+    },
+    owner: {
+      name: 'James T. Calloway',
+      mailing_address: '1109 Mockingbird Ln',
+      city: 'Austin',
+      state: 'TX',
+      zip: '78745',
+      phone: '(512) 555-0387',
+      email: 'jtcalloway@email.com',
+    },
+    offer: {
+      min_offer: 2440,
+      max_offer: 12200,
+      sweet_spot_offer: 4880,
+      locked_offer: 4880,
+      offer_pct_of_market: 0.10,
+    },
+    pipeline_stage: 'negotiating',
+    letter_type: 'blind_offer',
+    letter_sent_date: '2026-02-01',
+    selling_strategy: 'seller_financing',
+    buy_details: { actual_purchase_price: null, closing_cost: null, total_cost: null, purchase_date: null },
+    sell_details: { asking_price: null, sale_price: null, sale_date: null, profit: null },
+    seller_financing_terms: null,
+    notes: 'Austin TX owner called 2/20 — countered at $9,500. Negotiating toward $6,000. Motivated to sell, inherited from grandfather.',
+    status: 'active',
+  },
+
+  // Deal 5: Under Contract
+  {
+    id: 'demo_deal_005',
+    created_at: '2026-01-25T09:00:00Z',
+    updated_at: '2026-03-01T11:00:00Z',
+    property: {
+      parcel_id: '0103-18-6651',
+      address: '0 Lystra Rd, Chapel Hill NC 27517',
+      county: 'Chatham County',
+      state: 'NC',
+      acres: 7.2,
+      zoning: 'AG',
+      assessed_value: 57600,
+      estimated_market_value: 72000,
+    },
+    owner: {
+      name: 'Dorothy B. Sutton',
+      mailing_address: '4430 Park Blvd',
+      city: 'Nashville',
+      state: 'TN',
+      zip: '37209',
+      phone: '(615) 555-0214',
+      email: 'dbsutton@email.com',
+    },
+    offer: {
+      min_offer: 2880,
+      max_offer: 14400,
+      sweet_spot_offer: 5760,
+      locked_offer: 14500,
+      offer_pct_of_market: 0.10,
+    },
+    pipeline_stage: 'under_contract',
+    letter_type: 'blind_offer',
+    letter_sent_date: '2026-01-28',
+    selling_strategy: 'wholesale',
+    buy_details: { actual_purchase_price: 14500, closing_cost: 450, total_cost: 14950, purchase_date: null },
+    sell_details: { asking_price: 52000, sale_price: null, sale_date: null, profit: null },
+    seller_financing_terms: null,
+    notes: 'Nashville TN owner accepted $14,500. Purchase contract signed 3/1. Closing scheduled for 3/28.',
+    status: 'active',
+  },
+
+  // Deal 6: SOLD — fully closed deal with all profit data populated
+  // This is the hero deal that populates Dashboard revenue and ProfitCalc
+  {
+    id: 'demo_deal_006',
+    created_at: '2025-12-10T09:00:00Z',
+    updated_at: '2026-03-05T16:30:00Z',
+    property: {
+      parcel_id: '0078-35-2941',
+      address: '0 Old Pittsboro Rd, Pittsboro NC 27312',
+      county: 'Chatham County',
+      state: 'NC',
+      acres: 4.8,
+      zoning: 'AG',
+      assessed_value: 38400,
+      estimated_market_value: 52000,
+    },
+    owner: {
+      name: 'Robert L. Whitfield',
+      mailing_address: '3821 Timber Creek Dr',
+      city: 'Richmond',
+      state: 'VA',
+      zip: '23235',
+      phone: '(804) 555-0198',
+      email: 'rlwhitfield@email.com',
+    },
+    offer: {
+      min_offer: 1920,
+      max_offer: 9600,
+      sweet_spot_offer: 3840,
+      locked_offer: 11000,
+      offer_pct_of_market: 0.10,
+    },
+    pipeline_stage: 'sold',
+    letter_type: 'blind_offer',
+    letter_sent_date: '2025-12-18',
+    selling_strategy: 'seller_financing',
+    buy_details: {
+      actual_purchase_price: 11000,
+      closing_cost: 350,
+      total_cost: 11350,
+      purchase_date: '2026-02-18',
+    },
+    sell_details: {
+      asking_price: 42000,
+      sale_price: 42000,
+      sale_date: '2026-03-05',
+      profit: 30650,
+    },
+    seller_financing_terms: {
+      down_payment_pct: 0.15,
+      down_payment_amount: 6300,
+      loan_amount: 35700,
+      interest_rate: 0.10,
+      term_years: 10,
+      monthly_payment: 471.82,
+      total_collected: 62918.40,
+      total_profit: 51918.40,
+    },
+    notes: 'Richmond VA owner. Accepted $11K cash. Sold on seller financing — $6,300 down, $471.82/month x 120 months. CLOSED 3/5/26.',
+    status: 'active',
+  },
+];
+
+// --- DEMO LETTERS ---
+// 3 pre-written letters — full body text, not stubs
+// Letters reference actual deal properties and use the demo persona
+
+const DEMO_LETTERS = [
+  // Letter 1: Blind offer for deal_002 (Moncure-Flatwood Rd)
+  {
+    id: 'demo_letter_001',
+    created_at: '2026-02-07T08:30:00Z',
+    deal_id: 'demo_deal_002',
+    letter_type: 'blind_offer',
+    from_name: 'Sarah Calloway',
+    from_company: 'Blue Ridge Land Co.',
+    from_address: '412 Glenwood Ave Suite 201, Raleigh NC 27603',
+    from_phone: '(919) 555-0142',
+    offer_price: 1840,
+    body_text: `Dear Patricia Monroe,
+
+My name is Sarah Calloway and I am a local land investor based in Raleigh, NC. I recently came across your 2.3-acre parcel on Moncure-Flatwood Road in Chatham County (Parcel #0081-12-4409) and I am writing to make you a straightforward cash offer.
+
+I would like to purchase your land for $1,840 cash. This is a firm, no-obligation offer. I pay all closing costs and there are no real estate agent commissions involved — what you see is what you receive at closing.
+
+I understand you may not be actively looking to sell, but many landowners appreciate the opportunity to convert unused property into cash quickly and without hassle. We can close in as little as 3-4 weeks through a reputable local title company.
+
+If you are interested or have any questions, please give me a call or text at (919) 555-0142, or reply to this letter. There is no pressure and no obligation.
+
+Thank you for your time.
+
+Sincerely,
+Sarah Calloway
+Blue Ridge Land Co.
+Raleigh, NC`,
+    status: 'draft',
+    printed: false,
+    mailed_date: '2026-02-07',
+  },
+
+  // Letter 2: Neutral inquiry for deal_003 (Big Woods Rd)
+  {
+    id: 'demo_letter_002',
+    created_at: '2026-02-08T09:00:00Z',
+    deal_id: 'demo_deal_003',
+    letter_type: 'neutral',
+    from_name: 'Sarah Calloway',
+    from_company: 'Blue Ridge Land Co.',
+    from_address: '412 Glenwood Ave Suite 201, Raleigh NC 27603',
+    from_phone: '(919) 555-0142',
+    offer_price: null,
+    body_text: `Dear Helen Draper,
+
+I hope this letter finds you well. My name is Sarah Calloway and I am a real estate investor who focuses on land in the Chatham County area of North Carolina. I came across your 3.5-acre parcel on Big Woods Road in Pittsboro (Parcel #0065-22-3307) and wanted to reach out personally.
+
+I am actively looking to purchase land in this area and your property caught my attention. The Chatham County market has seen strong interest from buyers seeking rural properties near the Research Triangle, and I believe your land would be an excellent fit for my portfolio.
+
+If you have ever considered selling your parcel — even if just to explore your options — I would love to have a conversation. I work directly with sellers and can make the process simple and stress-free.
+
+Please give me a call at (919) 555-0142 at your convenience, or feel free to write back. I am happy to discuss what your property might be worth to me.
+
+Thank you for considering this. I look forward to hearing from you.
+
+Warm regards,
+Sarah Calloway
+Blue Ridge Land Co.`,
+    status: 'draft',
+    printed: false,
+    mailed_date: '2026-02-08',
+  },
+
+  // Letter 3: The blind offer that started the closed deal_006 (Old Pittsboro Rd)
+  {
+    id: 'demo_letter_003',
+    created_at: '2025-12-18T11:00:00Z',
+    deal_id: 'demo_deal_006',
+    letter_type: 'blind_offer',
+    from_name: 'Sarah Calloway',
+    from_company: 'Blue Ridge Land Co.',
+    from_address: '412 Glenwood Ave Suite 201, Raleigh NC 27603',
+    from_phone: '(919) 555-0142',
+    offer_price: 11000,
+    body_text: `Dear Robert Whitfield,
+
+My name is Sarah Calloway and I purchase land directly from owners in Chatham County, North Carolina. I am writing about your 4.8-acre parcel on Old Pittsboro Road in Pittsboro (Parcel #0078-35-2941).
+
+I would like to offer you $11,000 cash for this property. Here is what that means for you:
+
+- You receive $11,000 at closing — no deductions, no surprises
+- I pay 100% of all closing costs
+- No real estate agent fees or commissions
+- We can close in as little as 3 weeks through a local title company
+- No need to clean up, survey, or improve the property
+
+I know this may be unexpected, but many property owners appreciate having a simple, straightforward path to selling land they no longer use or visit. There is no pressure and no obligation to respond.
+
+If you are open to discussing this offer, please call or text me at (919) 555-0142. I look forward to the possibility of working with you.
+
+Respectfully,
+Sarah Calloway
+Blue Ridge Land Co.
+Raleigh, NC`,
+    status: 'draft',
+    printed: false,
+    mailed_date: '2025-12-18',
+  },
+];
+
+// ============================================================
+// EXPORTED FUNCTIONS
+// ============================================================
+
+/**
+ * Wipes all lpg_ data from localStorage while preserving the Claude API key.
+ * Enumerates all keys first, then deletes — avoids the index-shift bug from
+ * deleting during iteration of a live localStorage object.
+ */
+export function clearAllData() {
+  // Preserve API key before any wipe
+  const settings = loadSettings();
+  const apiKey = settings?.claude_api_key || null;
+
+  // Collect all lpg_ keys into an array first, then delete
+  const keysToDelete = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('lpg_')) keysToDelete.push(key);
+  }
+  keysToDelete.forEach(key => localStorage.removeItem(key));
+  console.log(`Cleared ${keysToDelete.length} lpg_ storage keys`);
+
+  // Restore API key if it existed before the wipe
+  if (apiKey) {
+    saveSettings({ claude_api_key: apiKey });
+    console.log('API key preserved after clear');
+  }
+}
+
+/**
+ * Seeds all 7 modules with realistic demo data in a fixed, idempotent state.
+ * Always calls clearAllData() first — safe to run multiple times without duplicates.
+ * After this runs, every module (Dashboard, MarketFinder, PropertyList, FilterList,
+ * DealTracker, LetterGen, ProfitCalc) will show populated content on next page load.
+ */
+export function seedDemoData() {
+  console.log('Seeding demo data — starting wipe-then-seed...');
+
+  // Step 1: Wipe all existing data (preserves API key)
+  clearAllData();
+
+  // Step 2: Seed user profile
+  saveUserProfile(DEMO_USER_PROFILE);
+  console.log('Seeded: user profile (Blue Ridge Land Co.)');
+
+  // Step 3: Seed target markets (Chatham County NC + Yavapai County AZ)
+  DEMO_MARKETS.forEach(m => saveMarket(m));
+  console.log('Seeded: 2 target markets');
+
+  // Step 4: Seed property list metadata and raw CSV data
+  savePropertyList(DEMO_PROPERTY_LIST);
+  saveRawData(DEMO_PROPERTY_LIST.id, DEMO_RAW_PROPERTIES);
+  console.log('Seeded: 1 property list with 16 raw properties');
+
+  // Step 5: Seed filtered list result
+  saveFilteredList(DEMO_FILTERED_LIST);
+  console.log('Seeded: 1 filtered list (10 properties passed filters)');
+
+  // Step 6: Seed deals across full pipeline (new_lead through sold)
+  DEMO_DEALS.forEach(d => saveDeal(d));
+  console.log('Seeded: 6 deals across pipeline stages');
+
+  // Step 7: Seed letters with pre-written body text
+  DEMO_LETTERS.forEach(l => saveLetter(l));
+  console.log('Seeded: 3 letters with full body text');
+
+  console.log('Demo data seed complete — reload the page to see all modules populated');
+}
