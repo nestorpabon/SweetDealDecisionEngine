@@ -1,7 +1,9 @@
 // Left sidebar navigation with links to all 8 modules + Dashboard + Settings
 // Highlights the currently active page based on the URL path
+// On mobile: fixed overlay drawer that slides in from left. On desktop: stays in document flow.
 
-import { NavLink } from 'react-router-dom';
+import { NavLink, useContext } from 'react-router-dom';
+import { SidebarContext } from '../../App';
 
 // Navigation items — each maps to a page/module in the app
 const NAV_ITEMS = [
@@ -18,12 +20,29 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
+  const { open, close } = useContext(SidebarContext);
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
+    <aside
+      className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 flex flex-col
+        transform transition-transform duration-200 ease-in-out
+        ${open ? 'translate-x-0' : '-translate-x-full'}
+        md:relative md:translate-x-0 md:z-auto`}
+    >
       {/* App logo / title */}
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-lg font-bold text-gray-900">Sweet Deal</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Decision Engine</p>
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold text-gray-900">Sweet Deal</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Decision Engine</p>
+        </div>
+        {/* Mobile close button */}
+        <button
+          onClick={close}
+          className="md:hidden p-1 text-gray-400 hover:text-gray-700 shrink-0"
+          aria-label="Close menu"
+        >
+          <span className="text-xl">✕</span>
+        </button>
       </div>
 
       {/* Navigation links */}
@@ -33,6 +52,7 @@ export default function Sidebar() {
             key={item.path}
             to={item.path}
             end={item.path === '/'}
+            onClick={close}
             className={({ isActive }) =>
               `flex items-center gap-3 px-6 py-2.5 text-sm transition-colors ${
                 isActive
