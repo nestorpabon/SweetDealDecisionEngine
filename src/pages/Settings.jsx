@@ -5,7 +5,9 @@ import { useState, useEffect } from 'react';
 import PageWrapper from '../components/Layout/PageWrapper';
 import TopBar from '../components/Layout/TopBar';
 import ErrorMessage from '../components/shared/ErrorMessage';
+import ConfirmModal from '../components/shared/ConfirmModal';
 import { saveUserProfile, loadUserProfile, exportAllData, importAllData, loadSettings, saveSettings } from '../utils/storage';
+import { seedDemoData, clearAllData } from '../utils/demoData';
 
 // Default empty profile shape
 const EMPTY_PROFILE = {
@@ -35,6 +37,11 @@ export default function Settings() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [apiKeyError, setApiKeyError] = useState('');
+
+  // Demo & Data state — confirm modals and success banner
+  const [showLoadConfirm, setShowLoadConfirm] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [demoSuccess, setDemoSuccess] = useState(false);
 
   // --- Load existing profile and API key on mount ---
   useEffect(() => {
@@ -110,6 +117,25 @@ export default function Settings() {
     } else {
       setApiKeyError('Could not save API key. Your browser may be blocking localStorage. Check your privacy settings.');
     }
+  }
+
+  // --- Handler: confirm Load Demo Data ---
+  // Wipes all data, seeds demo content, shows a success banner, then reloads after 1500ms
+  function handleConfirmLoad() {
+    setShowLoadConfirm(false);
+    seedDemoData();
+    setDemoSuccess(true);
+    console.log('Demo data seeded — reloading in 1500ms');
+    setTimeout(() => window.location.reload(), 1500);
+  }
+
+  // --- Handler: confirm Clear All Data ---
+  // Wipes all lpg_ data (preserves API key) then immediately reloads
+  function handleConfirmClear() {
+    setShowClearConfirm(false);
+    clearAllData();
+    console.log('All data cleared — reloading');
+    window.location.reload();
   }
 
   // --- Render ---
@@ -457,7 +483,62 @@ export default function Settings() {
             Backup includes all deals, markets, property lists, letters, and calculations.
           </p>
         </div>
+
+        {/* --- Demo & Data Card --- */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Demo &amp; Data</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Load a full set of sample land deals to explore every module, or wipe all data to start fresh.
+          </p>
+
+          {/* Success banner — visible after Load Demo Data confirms */}
+          {demoSuccess && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-800 rounded-lg p-3 text-sm">
+              Demo data loaded! Reloading the page...
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setShowLoadConfirm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+            >
+              Load Demo Data
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowClearConfirm(true)}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+            >
+              Clear All Data
+            </button>
+          </div>
+        </div>
       </PageWrapper>
+
+      {/* Confirm modal — Load Demo Data */}
+      <ConfirmModal
+        isOpen={showLoadConfirm}
+        title="Load Demo Data"
+        message="This will replace all your current data with demo content. Continue?"
+        confirmLabel="Load Demo Data"
+        confirmColor="blue"
+        onConfirm={handleConfirmLoad}
+        onCancel={() => setShowLoadConfirm(false)}
+      />
+
+      {/* Confirm modal — Clear All Data */}
+      <ConfirmModal
+        isOpen={showClearConfirm}
+        title="Clear All Data"
+        message="This will permanently delete all your deals, markets, property lists, letters, and calculations. Your API key will be preserved. This cannot be undone."
+        confirmLabel="Clear All Data"
+        confirmColor="red"
+        onConfirm={handleConfirmClear}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </>
   );
 }
