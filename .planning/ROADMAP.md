@@ -66,7 +66,11 @@ Plans:
   2. After loading demo data, every module (Dashboard, DealTracker, ProfitCalc, etc.) shows populated content rather than empty states
   3. Clicking "Load Demo Data" a second time resets the app back to the same clean demo state — no duplicates, no stale data
   4. Clicking "Clear All Data" wipes all localStorage and returns every module to its empty state
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — demoData.js utility: all seed data constants + seedDemoData() + clearAllData() (DEMO-02, DEMO-03)
+- [ ] 08-02-PLAN.md — Settings.jsx: Demo & Data card UI with Load and Clear buttons (DEMO-01, DEMO-04)
 
 ### Phase 9: Module Polish
 **Goal**: Every module looks and behaves investor-grade — no browser dialogs, no internal IDs exposed, no broken toggles, loading states everywhere
@@ -101,6 +105,6 @@ Plans:
 | 5. Profit Calculators | v1.0 | - | Complete | 2026-03-30 |
 | 6. Polish & Export | v1.0 | - | Complete | 2026-03-30 |
 | 7. API Key Settings | 2/2 | Complete   | 2026-03-31 | - |
-| 8. Demo Data System | v1.1 | 0/? | Not started | - |
+| 8. Demo Data System | v1.1 | 0/2 | Not started | - |
 | 9. Module Polish | v1.1 | 0/? | Not started | - |
 | 10. End-to-End QA | v1.1 | 0/? | Not started | - |
