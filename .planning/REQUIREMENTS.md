@@ -17,8 +17,8 @@ Requirements for demo-ready milestone. Each maps to roadmap phases.
 ### Demo Data
 
 - [ ] **DEMO-01**: Settings page has a "Load Demo Data" button that seeds all modules with realistic land deal sample data
-- [ ] **DEMO-02**: Demo data includes: 2 target markets, 1 property list (15+ properties), 5+ deals across pipeline stages, 3+ letters, 2+ profit calculations
-- [ ] **DEMO-03**: Loading demo data is idempotent — clicking again resets to fresh demo state
+- [x] **DEMO-02**: Demo data includes: 2 target markets, 1 property list (15+ properties), 5+ deals across pipeline stages, 3+ letters, 2+ profit calculations
+- [x] **DEMO-03**: Loading demo data is idempotent — clicking again resets to fresh demo state
 - [ ] **DEMO-04**: A "Clear All Data" button lets user wipe everything and start fresh
 
 ### Module Polish
@@ -71,8 +71,8 @@ Deferred to future release.
 | API-03 | Phase 7 | Complete |
 | API-04 | Phase 7 | Complete |
 | DEMO-01 | Phase 8 | Pending |
-| DEMO-02 | Phase 8 | Pending |
-| DEMO-03 | Phase 8 | Pending |
+| DEMO-02 | Phase 8 | Complete |
+| DEMO-03 | Phase 8 | Complete |
 | DEMO-04 | Phase 8 | Pending |
 | POL-01 | Phase 9 | Pending |
 | POL-02 | Phase 9 | Pending |

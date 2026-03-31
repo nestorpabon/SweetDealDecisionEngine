@@ -105,6 +105,6 @@ Plans:
 | 5. Profit Calculators | v1.0 | - | Complete | 2026-03-30 |
 | 6. Polish & Export | v1.0 | - | Complete | 2026-03-30 |
 | 7. API Key Settings | 2/2 | Complete   | 2026-03-31 | - |
-| 8. Demo Data System | v1.1 | 0/2 | Not started | - |
+| 8. Demo Data System | 1/2 | In Progress|  | - |
 | 9. Module Polish | v1.1 | 0/? | Not started | - |
 | 10. End-to-End QA | v1.1 | 0/? | Not started | - |

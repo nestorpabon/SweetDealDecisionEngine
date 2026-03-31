@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Demo-Ready
 status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-31T15:42:20.919Z"
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-31T19:38:31.307Z"
 last_activity: 2026-03-30 — v1.1 roadmap created (Phases 7-10)
 progress:
   total_phases: 10
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 50
 ---
 
@@ -52,6 +52,7 @@ Progress: [█████░░░░░] 50%
 *Updated after each plan completion*
 | Phase 07-api-key-settings P01 | 15 | 2 tasks | 2 files |
 | Phase 07-api-key-settings P02 | 5 | 1 tasks | 1 files |
+| Phase 08-demo-data-system P01 | 151 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,8 @@ Progress: [█████░░░░░] 50%
 - [Phase 07-api-key-settings]: getApiKey() checks localStorage first, env var second — enables demo users without .env file
 - [Phase Phase 07-api-key-settings]: API key stored in lpg_settings.claude_api_key, separate from lpg_user_profile — avoids profile save clobbering key
 - [Phase 07-api-key-settings]: Error messages reference Settings UI path, not .env files — demo users have no .env
+- [Phase 08-demo-data-system]: seedDemoData() always calls clearAllData() first for idempotency via wipe-then-seed
+- [Phase 08-demo-data-system]: clearAllData() collects lpg_ keys into array before deleting to avoid index-shift bug
 
 ### Pending Todos
 
@@ -76,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T15:42:20.915Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-demo-data-system/08-CONTEXT.md
+Last session: 2026-03-31T19:38:31.303Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
