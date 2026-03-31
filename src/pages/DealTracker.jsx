@@ -564,7 +564,6 @@ export default function DealTracker() {
             </div>
           </>
         ) : (
-        ) : (
           /* --- LIST VIEW --- */
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="overflow-x-auto">

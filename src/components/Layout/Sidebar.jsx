@@ -2,7 +2,8 @@
 // Highlights the currently active page based on the URL path
 // On mobile: fixed overlay drawer that slides in from left. On desktop: stays in document flow.
 
-import { NavLink, useContext } from 'react-router-dom';
+import { useContext } from 'react';
+import { NavLink } from 'react-router-dom';
 import { SidebarContext } from '../../App';
 
 // Navigation items — each maps to a page/module in the app
