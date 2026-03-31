@@ -300,6 +300,7 @@ export default function DealTracker() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'list'
+  const [mobileStage, setMobileStage] = useState(PIPELINE_STAGES[0].key); // Mobile kanban stage filter
 
   // Drag state for kanban cards
   const dragDeal = useRef(null);
@@ -389,12 +390,12 @@ export default function DealTracker() {
       <TopBar title="Deal Tracker" />
       <PageWrapper>
         {/* Page Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Deal Tracker</h1>
             <p className="text-gray-500 mt-1">Track every deal from lead to sold.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {/* View mode toggle */}
             <div className="flex border border-gray-300 rounded-lg overflow-hidden">
               <button
@@ -455,61 +456,114 @@ export default function DealTracker() {
           />
         ) : viewMode === 'kanban' ? (
           /* --- KANBAN VIEW --- */
-          <div className="overflow-x-auto pb-4">
-            <div className="flex gap-3 min-w-max">
-              {PIPELINE_STAGES.map((stage) => {
-                const stageDeals = getDealsByStage(stage.key);
+          <>
+            {/* Mobile: Stage selector + single column */}
+            <div className="md:hidden space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Viewing stage</label>
+                <select
+                  value={mobileStage}
+                  onChange={(e) => setMobileStage(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {PIPELINE_STAGES.map((stage) => (
+                    <option key={stage.key} value={stage.key}>
+                      {stage.emoji} {stage.label} ({getDealsByStage(stage.key).length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Render single column for selected stage */}
+              {(() => {
+                const selectedStage = PIPELINE_STAGES.find((s) => s.key === mobileStage);
+                const stageDeals = getDealsByStage(mobileStage);
                 return (
-                  <div
-                    key={stage.key}
-                    className="w-56 shrink-0"
-                    onDragOver={(e) => handleDragOver(e, stage.key)}
-                    onDrop={(e) => handleDrop(e, stage.key)}
-                  >
-                    {/* Column header */}
+                  <div>
                     <div className="flex items-center gap-2 mb-3 px-1">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: stage.color }}
-                      ></span>
-                      <span className="text-sm font-semibold text-gray-700">{stage.label}</span>
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: selectedStage.color }}></span>
+                      <span className="text-sm font-semibold text-gray-700">{selectedStage.label}</span>
                       <span className="text-xs text-gray-400 ml-auto">{stageDeals.length}</span>
                     </div>
-
-                    {/* Drop zone */}
-                    <div className="bg-gray-50 rounded-lg p-2 min-h-[120px] space-y-2 border border-dashed border-gray-200">
+                    <div className="bg-gray-50 rounded-lg p-2 space-y-2">
                       {stageDeals.map((deal) => (
                         <div
                           key={deal.id}
-                          draggable
-                          onDragStart={() => handleDragStart(deal.id)}
                           onClick={() => setSelectedDeal(deal)}
                           className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:shadow-md transition-shadow"
                         >
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {deal.owner?.name || 'Unknown Owner'}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate mt-0.5">
-                            {deal.property?.address || 'No address'}
-                          </p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{deal.owner?.name || 'Unknown Owner'}</p>
+                          <p className="text-xs text-gray-500 truncate mt-0.5">{deal.property?.address || 'No address'}</p>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-gray-400">
-                              {deal.property?.acres ? `${deal.property.acres} ac` : ''}
-                            </span>
-                            {deal.offer?.locked_offer > 0 && (
-                              <span className="text-xs font-bold text-blue-600">
-                                {formatMoney(deal.offer.locked_offer)}
-                              </span>
-                            )}
+                            <span className="text-xs text-gray-400">{deal.property?.acres ? `${deal.property.acres} ac` : ''}</span>
+                            {deal.offer?.locked_offer > 0 && <span className="text-xs font-bold text-blue-600">{formatMoney(deal.offer.locked_offer)}</span>}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 );
-              })}
+              })()}
             </div>
-          </div>
+
+            {/* Desktop: Full horizontal scroll kanban — unchanged behavior */}
+            <div className="hidden md:block overflow-x-auto pb-4">
+              <div className="flex gap-3 min-w-max">
+                {PIPELINE_STAGES.map((stage) => {
+                  const stageDeals = getDealsByStage(stage.key);
+                  return (
+                    <div
+                      key={stage.key}
+                      className="w-56 shrink-0"
+                      onDragOver={(e) => handleDragOver(e, stage.key)}
+                      onDrop={(e) => handleDrop(e, stage.key)}
+                    >
+                      {/* Column header */}
+                      <div className="flex items-center gap-2 mb-3 px-1">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: stage.color }}
+                        ></span>
+                        <span className="text-sm font-semibold text-gray-700">{stage.label}</span>
+                        <span className="text-xs text-gray-400 ml-auto">{stageDeals.length}</span>
+                      </div>
+
+                      {/* Drop zone */}
+                      <div className="bg-gray-50 rounded-lg p-2 min-h-[120px] space-y-2 border border-dashed border-gray-200">
+                        {stageDeals.map((deal) => (
+                          <div
+                            key={deal.id}
+                            draggable
+                            onDragStart={() => handleDragStart(deal.id)}
+                            onClick={() => setSelectedDeal(deal)}
+                            className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:shadow-md transition-shadow"
+                          >
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {deal.owner?.name || 'Unknown Owner'}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate mt-0.5">
+                              {deal.property?.address || 'No address'}
+                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="text-xs text-gray-400">
+                                {deal.property?.acres ? `${deal.property.acres} ac` : ''}
+                              </span>
+                              {deal.offer?.locked_offer > 0 && (
+                                <span className="text-xs font-bold text-blue-600">
+                                  {formatMoney(deal.offer.locked_offer)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        ) : (
         ) : (
           /* --- LIST VIEW --- */
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
