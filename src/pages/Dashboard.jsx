@@ -11,11 +11,26 @@ import { formatMoney } from '../utils/calculations';
 import { PIPELINE_STAGES, getStageByKey } from '../constants/pipelineStages';
 import { useNavigate } from 'react-router-dom';
 
+// Hook to detect mobile viewport (below md breakpoint at 768px)
+// Used to hide X-axis labels on narrow screens to prevent overlap
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  return isMobile;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [pipelineData, setPipelineData] = useState([]);
   const [recentDeals, setRecentDeals] = useState([]);
+  const isMobile = useIsMobile();
 
   // --- Load deal data and compute stats on mount ---
   useEffect(() => {
@@ -141,13 +156,12 @@ export default function Dashboard() {
               <h2 className="text-lg font-bold text-gray-900 mb-4">Deal Pipeline</h2>
               {pipelineData.some((d) => d.count > 0) ? (
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={pipelineData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                  <BarChart data={pipelineData} margin={{ top: 5, right: 10, left: 10, bottom: isMobile ? 5 : 5 }}>
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: '#6B7280' }}
-                      angle={-30}
+                      tick={isMobile ? false : { fontSize: 11, fill: '#6B7280', angle: -30 }}
+                      height={isMobile ? 20 : 60}
                       textAnchor="end"
-                      height={60}
                     />
                     <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
                     <Tooltip
@@ -187,7 +201,7 @@ export default function Dashboard() {
                       <div
                         key={deal.id}
                         onClick={() => navigate('/deal-tracker')}
-                        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer gap-2"
                       >
                         <div className="flex items-center gap-3">
                           <span
@@ -203,7 +217,7 @@ export default function Dashboard() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="sm:text-right">
                           <span
                             className="text-xs font-medium px-2 py-0.5 rounded-full text-white"
                             style={{ backgroundColor: stage.color }}
