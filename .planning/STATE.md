@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Demo-Ready
 status: planning
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-31T19:38:31.307Z"
+stopped_at: Completed 08-02-PLAN.md — awaiting human verify checkpoint
+last_updated: "2026-03-31T19:41:04.787Z"
 last_activity: 2026-03-30 — v1.1 roadmap created (Phases 7-10)
 progress:
   total_phases: 10
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 50
 ---
 
@@ -53,6 +53,7 @@ Progress: [█████░░░░░] 50%
 | Phase 07-api-key-settings P01 | 15 | 2 tasks | 2 files |
 | Phase 07-api-key-settings P02 | 5 | 1 tasks | 1 files |
 | Phase 08-demo-data-system P01 | 151 | 2 tasks | 1 files |
+| Phase 08-demo-data-system P02 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,7 @@ Progress: [█████░░░░░] 50%
 - [Phase 07-api-key-settings]: Error messages reference Settings UI path, not .env files — demo users have no .env
 - [Phase 08-demo-data-system]: seedDemoData() always calls clearAllData() first for idempotency via wipe-then-seed
 - [Phase 08-demo-data-system]: clearAllData() collects lpg_ keys into array before deleting to avoid index-shift bug
+- [Phase 08-demo-data-system]: confirmColor=blue for Load Demo Data modal to distinguish from red Clear action
 
 ### Pending Todos
 
@@ -79,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T19:38:31.303Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-31T19:41:04.783Z
+Stopped at: Completed 08-02-PLAN.md — awaiting human verify checkpoint
 Resume file: None
