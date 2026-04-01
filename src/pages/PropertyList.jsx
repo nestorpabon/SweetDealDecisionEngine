@@ -251,14 +251,14 @@ export default function PropertyList() {
                 {/* Column mapping dropdowns */}
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Column Mapping</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-3">
                     {APP_FIELDS.map((field) => (
-                      <div key={field.key} className="flex items-center gap-2">
-                        <label className="text-sm text-gray-600 w-40 shrink-0">{field.label}</label>
+                      <div key={field.key} className="flex items-center gap-3">
+                        <label className="text-sm text-gray-600 w-32 md:w-40 shrink-0">{field.label}</label>
                         <select
                           value={columnMapping[field.key] || ''}
                           onChange={(e) => handleMappingChange(field.key, e.target.value)}
-                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                           <option value="">— Skip —</option>
                           {csvHeaders.map((header) => (
