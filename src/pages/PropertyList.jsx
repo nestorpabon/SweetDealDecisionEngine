@@ -145,7 +145,10 @@ export default function PropertyList() {
     if (!metaSaved || !dataSaved) {
       const storageUsage = Object.keys(localStorage)
         .filter((k) => k.startsWith('lpg_'))
-        .reduce((sum, k) => sum + (localStorage.getItem(k)?.length || 0), 0);
+        .reduce((sum, k) => {
+          const value = localStorage.getItem(k) || '';
+          return sum + new Blob([value]).size;
+        }, 0);
       const storageMB = (storageUsage / 1024 / 1024).toFixed(1);
 
       setError(
@@ -255,10 +258,14 @@ export default function PropertyList() {
   // Get the column headers for the table from the first row of data
   const tableHeaders = viewData.length > 0 ? Object.keys(viewData[0]).slice(0, 8) : [];
 
-  // Calculate storage usage
+  // Calculate storage usage in bytes (accurate)
   const storageUsage = Object.keys(localStorage)
     .filter((k) => k.startsWith('lpg_'))
-    .reduce((sum, k) => sum + (localStorage.getItem(k)?.length || 0), 0);
+    .reduce((sum, k) => {
+      const value = localStorage.getItem(k) || '';
+      // Use Blob to get accurate byte size (accounts for UTF-16 encoding)
+      return sum + new Blob([value]).size;
+    }, 0);
   const storageMB = (storageUsage / 1024 / 1024).toFixed(2);
   const storagePercent = Math.round((storageUsage / (5 * 1024 * 1024)) * 100); // Assuming 5MB limit
 
