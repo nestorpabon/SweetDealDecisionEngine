@@ -36,13 +36,16 @@ export default function BuyerProfile() {
 
   // --- Load deals on mount (filter to owned properties) ---
   useEffect(() => {
-    const allDeals = loadAllDeals();
-    // Show deals that are closed/bought, for sale, or any active deal
-    const ownedDeals = allDeals.filter((d) =>
-      ['closed_bought', 'for_sale', 'under_contract', 'negotiating', 'new_lead', 'letter_sent', 'seller_responded'].includes(d.pipeline_stage)
-    );
-    setDeals(ownedDeals);
-    console.log('👤 BuyerProfile: loaded', ownedDeals.length, 'eligible deals');
+    async function load() {
+      const allDeals = await loadAllDeals();
+      // Show deals that are closed/bought, for sale, or any active deal
+      const ownedDeals = allDeals.filter((d) =>
+        ['closed_bought', 'for_sale', 'under_contract', 'negotiating', 'new_lead', 'letter_sent', 'seller_responded'].includes(d.pipeline_stage)
+      );
+      setDeals(ownedDeals);
+      console.log('👤 BuyerProfile: loaded', ownedDeals.length, 'eligible deals');
+    }
+    load();
   }, []);
 
   // Get the selected deal

@@ -36,9 +36,12 @@ export default function FilterList() {
 
   // --- Load available property lists on mount ---
   useEffect(() => {
-    const lists = loadAllPropertyLists();
-    setPropertyLists(lists);
-    console.log('🔧 Filter page: found', lists.length, 'property lists');
+    async function load() {
+      const lists = await loadAllPropertyLists();
+      setPropertyLists(lists);
+      console.log('🔧 Filter page: found', lists.length, 'property lists');
+    }
+    load();
   }, []);
 
   // --- Handle list selection ---

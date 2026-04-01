@@ -27,11 +27,14 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const profile = loadUserProfile();
-    const hasProfile = profile && profile.your_name && profile.your_name.trim().length > 0;
-    setNeedsOnboarding(!hasProfile);
-    setChecked(true);
-    console.log('🏠 App init — profile exists:', hasProfile);
+    async function check() {
+      const profile = await loadUserProfile();
+      const hasProfile = profile && profile.your_name && profile.your_name.trim().length > 0;
+      setNeedsOnboarding(!hasProfile);
+      setChecked(true);
+      console.log('🏠 App init — profile exists:', hasProfile);
+    }
+    check();
   }, []);
 
   // Wait for profile check before rendering

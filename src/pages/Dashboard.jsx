@@ -34,8 +34,9 @@ export default function Dashboard() {
 
   // --- Load deal data and compute stats on mount ---
   useEffect(() => {
-    console.log('📊 Dashboard: Loading deal stats...');
-    const deals = loadAllDeals();
+    async function load() {
+      console.log('📊 Dashboard: Loading deal stats...');
+      const deals = await loadAllDeals();
 
     // Count deals by status category
     const activeDeals = deals.filter((d) => d.status === 'active' && d.pipeline_stage !== 'dead');
@@ -93,6 +94,8 @@ export default function Dashboard() {
       active: activeDeals.length,
       sold: soldDeals.length,
     });
+    }
+    load();
   }, []);
 
   // --- Render ---
