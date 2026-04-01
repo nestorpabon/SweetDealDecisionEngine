@@ -21,6 +21,8 @@ import {
 // The app fields that CSV columns need to be mapped to
 const APP_FIELDS = [
   { key: 'parcel_id', label: 'Parcel ID / APN' },
+  { key: 'owner_first_name', label: 'Owner First Name' },
+  { key: 'owner_last_name', label: 'Owner Last Name' },
   { key: 'owner_name', label: 'Owner Name' },
   { key: 'owner_address', label: 'Owner Mailing Address' },
   { key: 'owner_city', label: 'Owner City' },
