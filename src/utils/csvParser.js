@@ -95,6 +95,7 @@ export function autoDetectMapping(headers) {
     owner_first_name: ['owner first name', 'first name', 'owner_first_name'],
     owner_last_name: ['owner last name', 'last name', 'owner_last_name'],
     owner_name: ['owner', 'owner name', 'owner_name', 'name', 'taxpayer'],
+    owner_occupied: ['owner occupied', 'occupied', 'owner_occupied', 'occupied status'],
     owner_address: ['mailing address', 'mail address', 'owner address', 'mailing_address'],
     owner_city: ['mailing city', 'mail city', 'owner city', 'mailing_city'],
     owner_state: ['mailing state', 'mail state', 'owner state', 'mailing_state'],

@@ -24,6 +24,7 @@ const APP_FIELDS = [
   { key: 'owner_first_name', label: 'Owner First Name' },
   { key: 'owner_last_name', label: 'Owner Last Name' },
   { key: 'owner_name', label: 'Owner Name' },
+  { key: 'owner_occupied', label: 'Owner Occupied' },
   { key: 'owner_address', label: 'Owner Mailing Address' },
   { key: 'owner_city', label: 'Owner City' },
   { key: 'owner_state', label: 'Owner State' },
