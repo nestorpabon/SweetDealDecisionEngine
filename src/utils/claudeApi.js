@@ -12,13 +12,13 @@ const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
 /**
- * Get the Claude API key — checks Settings (localStorage) first, then env var
+ * Get the Claude API key — checks Settings (database) first, then env var
  * Settings key takes priority so users can configure via UI without a .env file
  * Returns null if no key is configured anywhere
  */
-function getApiKey() {
+async function getApiKey() {
   // Check Settings (UI-configured) first — this is the primary path for demo users
-  const settings = loadSettings();
+  const settings = await loadSettings();
   if (settings?.claude_api_key && settings.claude_api_key.trim() !== '') {
     console.log('🔑 Using API key from Settings');
     return settings.claude_api_key.trim();
@@ -40,7 +40,7 @@ function getApiKey() {
  * @returns {Promise<string>} - Claude's response text
  */
 async function callClaude(systemPrompt, userPrompt) {
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   if (!apiKey) {
     throw new Error(
       'Claude API key not configured. Go to Settings and add your Claude API key to enable AI features.'

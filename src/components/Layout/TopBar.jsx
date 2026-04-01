@@ -2,15 +2,24 @@
 // Shows the current page title and user name from profile
 // Mobile: hamburger button to open sidebar. Desktop: title only.
 
-import { useContext } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { loadUserProfile } from '../../utils/storage';
 import { SidebarContext } from '../../contexts/SidebarContext';
 
 export default function TopBar({ title }) {
-  // Load the user profile to display their name
-  const profile = loadUserProfile();
-  const userName = profile?.your_name || 'New User';
+  const [profile, setProfile] = useState(null);
   const { toggle } = useContext(SidebarContext);
+
+  // Load the user profile to display their name
+  useEffect(() => {
+    async function load() {
+      const p = await loadUserProfile();
+      setProfile(p);
+    }
+    load();
+  }, []);
+
+  const userName = profile?.your_name || 'New User';
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex items-center gap-3 justify-between">
