@@ -341,9 +341,13 @@ export default function PropertyList() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleViewList(list.id)}
-                      className="text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-1"
+                      className={`text-sm font-medium px-3 py-1 ${
+                        selectedListId === list.id && viewData.length > 0
+                          ? 'text-orange-600 hover:text-orange-800'
+                          : 'text-blue-600 hover:text-blue-800'
+                      }`}
                     >
-                      View
+                      {selectedListId === list.id && viewData.length > 0 ? 'Hide' : 'View'}
                     </button>
                     <button
                       onClick={() => handleDeleteList(list.id)}
