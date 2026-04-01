@@ -143,8 +143,17 @@ export default function PropertyList() {
 
     // Validate that data was actually saved
     if (!metaSaved || !dataSaved) {
-      setError('Failed to save list to browser storage. Your browser may have storage limits or storage may be disabled.');
-      console.error('❌ Save failed - metadata or raw data save returned false');
+      const storageUsage = Object.keys(localStorage)
+        .filter((k) => k.startsWith('lpg_'))
+        .reduce((sum, k) => sum + (localStorage.getItem(k)?.length || 0), 0);
+      const storageMB = (storageUsage / 1024 / 1024).toFixed(1);
+
+      setError(
+        `Not enough browser storage to save this list. Your app is using ~${storageMB}MB of storage. ` +
+        `Please delete old lists in the "Saved Lists" section above to free up space, then try again. ` +
+        `Typical browser storage limit is 5-10MB per site.`
+      );
+      console.error('❌ Save failed - metadata or raw data save returned false. Storage usage:', storageMB + 'MB');
       return;
     }
 
@@ -246,6 +255,13 @@ export default function PropertyList() {
   // Get the column headers for the table from the first row of data
   const tableHeaders = viewData.length > 0 ? Object.keys(viewData[0]).slice(0, 8) : [];
 
+  // Calculate storage usage
+  const storageUsage = Object.keys(localStorage)
+    .filter((k) => k.startsWith('lpg_'))
+    .reduce((sum, k) => sum + (localStorage.getItem(k)?.length || 0), 0);
+  const storageMB = (storageUsage / 1024 / 1024).toFixed(2);
+  const storagePercent = Math.round((storageUsage / (5 * 1024 * 1024)) * 100); // Assuming 5MB limit
+
   // --- Render ---
   return (
     <>
@@ -255,6 +271,16 @@ export default function PropertyList() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Property List Manager</h1>
           <p className="text-gray-500 mt-1">Upload CSV property lists and map columns to app fields.</p>
+
+          {/* Storage usage indicator */}
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              📦 Browser Storage: <strong>{storageMB}MB</strong> used (~{storagePercent}% of typical limit)
+              {storagePercent > 80 && (
+                <span className="ml-2 text-orange-600 font-medium">⚠️ Storage nearly full! Delete old lists to free up space.</span>
+              )}
+            </p>
+          </div>
         </div>
 
         <ErrorMessage message={error} onDismiss={() => setError('')} />
