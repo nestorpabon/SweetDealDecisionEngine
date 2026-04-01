@@ -143,20 +143,29 @@ export default function PropertyList() {
 
     // Validate that data was actually saved
     if (!metaSaved || !dataSaved) {
-      const storageUsage = Object.keys(localStorage)
-        .filter((k) => k.startsWith('lpg_'))
-        .reduce((sum, k) => {
-          const value = localStorage.getItem(k) || '';
-          return sum + new Blob([value]).size;
-        }, 0);
+      let storageUsage = 0;
+      let storageKeyCount = 0;
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('lpg_')) {
+            const value = localStorage.getItem(key) || '';
+            storageUsage += new Blob([value]).size;
+            storageKeyCount++;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to calculate storage during error:', e);
+      }
+
       const storageMB = (storageUsage / 1024 / 1024).toFixed(1);
 
       setError(
-        `Not enough browser storage to save this list. Your app is using ~${storageMB}MB of storage. ` +
-        `Please delete old lists in the "Saved Lists" section above to free up space, then try again. ` +
-        `Typical browser storage limit is 5-10MB per site.`
+        `Browser storage is full. Your app is using ~${storageMB}MB of storage (${storageKeyCount} saved lists and datasets). ` +
+        `Please delete old property lists in the "Saved Lists" section above to free up space, then try again. ` +
+        `Browser storage limit is typically 5-10MB per site.`
       );
-      console.error('❌ Save failed - metadata or raw data save returned false. Storage usage:', storageMB + 'MB');
+      console.error('❌ Save failed - metadata or raw data save returned false. Storage usage:', storageMB + 'MB across', storageKeyCount, 'keys');
       return;
     }
 
@@ -259,13 +268,21 @@ export default function PropertyList() {
   const tableHeaders = viewData.length > 0 ? Object.keys(viewData[0]).slice(0, 8) : [];
 
   // Calculate storage usage in bytes (accurate)
-  const storageUsage = Object.keys(localStorage)
-    .filter((k) => k.startsWith('lpg_'))
-    .reduce((sum, k) => {
-      const value = localStorage.getItem(k) || '';
-      // Use Blob to get accurate byte size (accounts for UTF-16 encoding)
-      return sum + new Blob([value]).size;
-    }, 0);
+  let storageUsage = 0;
+  let storageKeyCount = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('lpg_')) {
+        const value = localStorage.getItem(key) || '';
+        storageUsage += new Blob([value]).size;
+        storageKeyCount++;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to calculate storage usage:', e);
+  }
+
   const storageMB = (storageUsage / 1024 / 1024).toFixed(2);
   const storagePercent = Math.round((storageUsage / (5 * 1024 * 1024)) * 100); // Assuming 5MB limit
 
