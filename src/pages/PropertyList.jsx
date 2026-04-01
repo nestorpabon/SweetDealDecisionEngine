@@ -133,8 +133,23 @@ export default function PropertyList() {
     };
 
     // Save metadata and raw data separately
-    savePropertyList(listMeta);
-    saveRawData(listId, csvData);
+    const metaSaved = savePropertyList(listMeta);
+    const dataSaved = saveRawData(listId, csvData);
+
+    // Validate that data was actually saved
+    if (!metaSaved || !dataSaved) {
+      setError('Failed to save list to browser storage. Your browser may have storage limits or storage may be disabled.');
+      console.error('❌ Save failed - metadata or raw data save returned false');
+      return;
+    }
+
+    // Verify data was persisted
+    const verifyData = loadRawData(listId);
+    if (!verifyData || verifyData.length === 0) {
+      setError('Data was not persisted to storage. Please check your browser storage settings and try again.');
+      console.error('❌ Verification failed - saved data could not be loaded back');
+      return;
+    }
 
     // Refresh saved lists
     const updated = loadAllPropertyLists();
@@ -150,11 +165,18 @@ export default function PropertyList() {
     // Auto-select the new list
     handleViewList(listId, csvData);
 
-    console.log('✅ Property list saved:', listId);
+    console.log('✅ Property list saved and verified:', listId);
   }
 
-  // --- View a saved list's data ---
+  // --- View/toggle a saved list's data ---
   function handleViewList(listId, data) {
+    // Toggle: if already viewing this list, hide it; otherwise show it
+    if (selectedListId === listId && viewData.length > 0) {
+      setViewData([]);
+      setSelectedListId(null);
+      return;
+    }
+
     setSelectedListId(listId);
     setCurrentPage(0);
 

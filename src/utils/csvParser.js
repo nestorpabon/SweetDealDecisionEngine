@@ -41,6 +41,7 @@ export function parseCSVFile(file) {
 /**
  * Apply a column mapping to raw CSV data, converting each row to our standard format
  * The mapping tells us which CSV column corresponds to which app field
+ * Also converts square feet to acres if needed (sqft / 43,560 = acres)
  * @param {object[]} rawData - Array of raw CSV row objects
  * @param {object} columnMapping - Maps app fields to CSV column names (e.g. { parcel_id: "APN" })
  * @returns {object[]} - Array of standardized property objects
@@ -54,7 +55,19 @@ export function applyColumnMapping(rawData, columnMapping) {
     // Map each app field to the value in the corresponding CSV column
     for (const [appField, csvColumn] of Object.entries(columnMapping)) {
       if (csvColumn && csvColumn !== '') {
-        property[appField] = row[csvColumn] ?? '';
+        let value = row[csvColumn] ?? '';
+
+        // Convert sqft to acres if this is the acres field and value looks like sqft
+        if (appField === 'acres' && value) {
+          const numValue = parseFloat(value);
+          // If value is > 10000, assume it's in sqft and convert to acres
+          if (numValue > 10000) {
+            value = (numValue / 43560).toFixed(2);
+            console.log(`📐 Converted ${numValue} sqft to ${value} acres`);
+          }
+        }
+
+        property[appField] = value;
       } else {
         property[appField] = '';
       }
@@ -79,13 +92,19 @@ export function autoDetectMapping(headers) {
   // Patterns to match against (case-insensitive)
   const patterns = {
     parcel_id: ['apn', 'parcel', 'parcel_id', 'parcel id', 'pin', 'tax id', 'account'],
+    owner_first_name: ['owner first name', 'first name', 'owner_first_name'],
+    owner_last_name: ['owner last name', 'last name', 'owner_last_name'],
     owner_name: ['owner', 'owner name', 'owner_name', 'name', 'taxpayer'],
     owner_address: ['mailing address', 'mail address', 'owner address', 'mailing_address'],
     owner_city: ['mailing city', 'mail city', 'owner city', 'mailing_city'],
     owner_state: ['mailing state', 'mail state', 'owner state', 'mailing_state'],
     owner_zip: ['mailing zip', 'mail zip', 'owner zip', 'mailing_zip'],
     property_address: ['situs', 'situs address', 'property address', 'site address', 'location'],
-    acres: ['acres', 'acreage', 'land size', 'lot size', 'size', 'area'],
+    property_city: ['property city', 'property_city', 'situs city'],
+    property_state: ['property state', 'property_state', 'situs state'],
+    property_zip: ['property zip', 'property_zip', 'situs zip'],
+    property_county: ['property county', 'property_county', 'county', 'situs county'],
+    acres: ['acres', 'acreage', 'land size', 'lot size', 'size', 'area', 'sqft', 'square feet', 'sq ft'],
     assessed_value: ['assessed', 'assessed value', 'total value', 'appraised', 'market value', 'value'],
     zoning: ['zoning', 'zone', 'land use', 'use code', 'property type'],
     tax_status: ['tax status', 'tax', 'delinquent', 'tax current'],

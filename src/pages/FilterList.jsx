@@ -79,7 +79,11 @@ export default function FilterList() {
     // Load raw CSV data and apply column mapping
     const rawData = loadRawData(selectedList.id);
     if (!rawData || rawData.length === 0) {
-      setError('No data found for this list. Please re-upload the CSV file on the Property List page.');
+      setError(
+        `No data found for the list "${selectedList.county_name}". The data may not have been saved properly. ` +
+        `Please go back to the Property List page and re-upload the CSV file. Make sure to wait for the "Save Property List" button to complete.`
+      );
+      console.error('❌ Raw data missing for list:', selectedList.id);
       return;
     }
 
@@ -87,6 +91,10 @@ export default function FilterList() {
 
     // Apply column mapping to get standardized property objects
     const mappedData = applyColumnMapping(rawData, selectedList.column_mapping);
+    if (mappedData.length === 0) {
+      setError('Column mapping failed. Please verify your column mappings on the Property List page and try again.');
+      return;
+    }
     setOriginalCount(mappedData.length);
 
     // Apply all filters
