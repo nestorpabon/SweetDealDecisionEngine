@@ -152,19 +152,21 @@ export default function PropertyList() {
       return;
     }
 
+    // Auto-select the new list BEFORE clearing csvData
+    setSelectedListId(listId);
+    setViewData(csvData);
+    setCurrentPage(0);
+
     // Refresh saved lists
     const updated = loadAllPropertyLists();
     setSavedLists(updated);
 
-    // Clear upload state and show the saved list
+    // Clear upload state
     setCsvData([]);
     setCsvHeaders([]);
     setColumnMapping({});
     setListName('');
     setListState('');
-
-    // Auto-select the new list
-    handleViewList(listId, csvData);
 
     console.log('✅ Property list saved and verified:', listId);
   }
