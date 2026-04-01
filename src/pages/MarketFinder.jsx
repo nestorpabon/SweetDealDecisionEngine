@@ -28,9 +28,12 @@ export default function MarketFinder() {
 
   // --- Load saved markets on mount ---
   useEffect(() => {
-    const markets = loadAllMarkets();
-    setSavedMarkets(markets);
-    console.log('🔍 MarketFinder: loaded', markets.length, 'saved markets');
+    async function load() {
+      const markets = await loadAllMarkets();
+      setSavedMarkets(markets);
+      console.log('🔍 MarketFinder: loaded', markets.length, 'saved markets');
+    }
+    load();
   }, []);
 
   // --- Run AI market research ---
@@ -59,7 +62,7 @@ export default function MarketFinder() {
   }
 
   // --- Save research results to localStorage ---
-  function handleSaveMarket() {
+  async function handleSaveMarket() {
     if (!results) return;
 
     const market = {
@@ -73,15 +76,15 @@ export default function MarketFinder() {
       status: 'active',
     };
 
-    saveMarket(market);
-    setSavedMarkets(loadAllMarkets());
+    await saveMarket(market);
+    setSavedMarkets(await loadAllMarkets());
     console.log('💾 Market saved:', market.id);
   }
 
   // --- Delete a saved market ---
-  function handleDeleteMarket(marketId) {
-    deleteMarket(marketId);
-    setSavedMarkets(loadAllMarkets());
+  async function handleDeleteMarket(marketId) {
+    await deleteMarket(marketId);
+    setSavedMarkets(await loadAllMarkets());
     if (viewingMarket?.id === marketId) setViewingMarket(null);
   }
 

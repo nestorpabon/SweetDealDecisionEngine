@@ -35,18 +35,21 @@ export default function LetterGen() {
 
   // --- Load deals and user profile on mount ---
   useEffect(() => {
-    const allDeals = loadAllDeals();
-    setDeals(allDeals);
+    async function load() {
+      const allDeals = await loadAllDeals();
+      setDeals(allDeals);
 
-    const profile = loadUserProfile();
-    setUserProfile(profile);
+      const profile = await loadUserProfile();
+      setUserProfile(profile);
 
-    // Use the user's default letter type if set
-    if (profile?.default_letter_type) {
-      setLetterType(profile.default_letter_type);
+      // Use the user's default letter type if set
+      if (profile?.default_letter_type) {
+        setLetterType(profile.default_letter_type);
+      }
+
+      console.log('✉️ LetterGen: loaded', allDeals.length, 'deals');
     }
-
-    console.log('✉️ LetterGen: loaded', allDeals.length, 'deals');
+    load();
   }, []);
 
   // Get the currently selected deal object
@@ -85,7 +88,7 @@ export default function LetterGen() {
   }
 
   // --- Save the letter to localStorage ---
-  function handleSaveLetter() {
+  async function handleSaveLetter() {
     if (!editedLetter || !selectedDeal) return;
 
     const letter = {
@@ -105,7 +108,7 @@ export default function LetterGen() {
       mailed_date: null,
     };
 
-    saveLetter(letter);
+    await saveLetter(letter);
     console.log('💾 Letter saved:', letter.id);
 
     // Also export as PDF immediately
@@ -173,7 +176,7 @@ export default function LetterGen() {
           mailed_date: null,
         };
 
-        saveLetter(letterObj);
+        await saveLetter(letterObj);
         generated.push(letterObj);
         console.log(`✅ Letter ${i + 1}/${eligibleDeals.length} generated for ${deal.owner.name}`);
       } catch (err) {

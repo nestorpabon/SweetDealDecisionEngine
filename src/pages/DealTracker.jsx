@@ -308,7 +308,12 @@ export default function DealTracker() {
 
   // --- Load deals on mount ---
   useEffect(() => {
-    refreshDeals();
+    async function load() {
+      const allDeals = await loadAllDeals();
+      setDeals(allDeals);
+      console.log('📈 DealTracker: loaded', allDeals.length, 'deals');
+    }
+    load();
   }, []);
 
   // Reload all deals from localStorage
@@ -324,7 +329,7 @@ export default function DealTracker() {
   }
 
   // --- Move a deal to a new stage ---
-  function moveDealToStage(dealId, newStage) {
+  async function moveDealToStage(dealId, newStage) {
     const deal = deals.find((d) => d.id === dealId);
     if (!deal) return;
 
@@ -336,7 +341,7 @@ export default function DealTracker() {
       status: newStage === 'dead' ? 'dead' : 'active',
     };
 
-    saveDeal(updated);
+    await saveDeal(updated);
     refreshDeals();
     console.log('➡️ Moved deal', dealId, 'to', newStage);
   }
@@ -363,22 +368,22 @@ export default function DealTracker() {
   }
 
   // --- Save deal from detail modal ---
-  function handleSaveDeal(updatedDeal) {
-    saveDeal(updatedDeal);
+  async function handleSaveDeal(updatedDeal) {
+    await saveDeal(updatedDeal);
     refreshDeals();
     setSelectedDeal(null);
   }
 
   // --- Add a new deal ---
-  function handleAddDeal(newDeal) {
-    saveDeal(newDeal);
+  async function handleAddDeal(newDeal) {
+    await saveDeal(newDeal);
     refreshDeals();
     setShowAddModal(false);
   }
 
   // --- Delete a deal ---
-  function handleDeleteDeal(dealId) {
-    deleteDeal(dealId);
+  async function handleDeleteDeal(dealId) {
+    await deleteDeal(dealId);
     refreshDeals();
     setDeleteConfirm(null);
     setSelectedDeal(null);

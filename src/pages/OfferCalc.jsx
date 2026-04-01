@@ -28,29 +28,32 @@ export default function OfferCalc() {
 
   // --- Load filtered list data on mount ---
   useEffect(() => {
-    const filteredId = searchParams.get('filtered_id');
-    console.log('💵 OfferCalc: loading filtered list:', filteredId);
+    async function load() {
+      const filteredId = searchParams.get('filtered_id');
+      console.log('💵 OfferCalc: loading filtered list:', filteredId);
 
-    // Load user's default offer percentage
-    const profile = loadUserProfile();
-    if (profile?.default_offer_pct) {
-      setOfferPct(profile.default_offer_pct);
-    }
+      // Load user's default offer percentage
+      const profile = await loadUserProfile();
+      if (profile?.default_offer_pct) {
+        setOfferPct(profile.default_offer_pct);
+      }
 
-    if (filteredId) {
-      const filteredList = loadFilteredList(filteredId);
-      if (filteredList && filteredList.filtered_data) {
-        setProperties(filteredList.filtered_data);
-        setFilteredListMeta(filteredList);
-        console.log('✅ Loaded', filteredList.filtered_data.length, 'filtered properties');
-      } else {
-        setError('Could not load filtered list. Go back to Filter List and re-apply your filters.');
+      if (filteredId) {
+        const filteredList = await loadFilteredList(filteredId);
+        if (filteredList && filteredList.filtered_data) {
+          setProperties(filteredList.filtered_data);
+          setFilteredListMeta(filteredList);
+          console.log('✅ Loaded', filteredList.filtered_data.length, 'filtered properties');
+        } else {
+          setError('Could not load filtered list. Go back to Filter List and re-apply your filters.');
+        }
       }
     }
+    load();
   }, [searchParams]);
 
   // --- Lock in an offer and create a Deal record ---
-  function handleLockOffer(property, offerData) {
+  async function handleLockOffer(property, offerData) {
     setError('');
 
     const dealId = generateId('deal');
@@ -108,7 +111,7 @@ export default function OfferCalc() {
       status: 'active',
     };
 
-    saveDeal(deal);
+    await saveDeal(deal);
     setLockedDeals((prev) => ({ ...prev, [property._rowIndex]: dealId }));
     console.log('🔒 Locked offer for', property.owner_name, '→ Deal', dealId);
   }

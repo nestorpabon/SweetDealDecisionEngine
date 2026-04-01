@@ -67,9 +67,12 @@ export default function PropertyList() {
 
   // --- Load saved lists on mount ---
   useEffect(() => {
-    const lists = loadAllPropertyLists();
-    setSavedLists(lists);
-    console.log('📋 Loaded', lists.length, 'saved property lists');
+    async function load() {
+      const lists = await loadAllPropertyLists();
+      setSavedLists(lists);
+      console.log('📋 Loaded', lists.length, 'saved property lists');
+    }
+    load();
   }, []);
 
   // --- Handle CSV file upload ---
@@ -111,7 +114,7 @@ export default function PropertyList() {
   }
 
   // --- Save the uploaded list to localStorage ---
-  function handleSaveList() {
+  async function handleSaveList() {
     setError('');
 
     if (!listName.trim()) {
@@ -138,8 +141,8 @@ export default function PropertyList() {
     };
 
     // Save metadata and raw data separately
-    const metaSaved = savePropertyList(listMeta);
-    const dataSaved = saveRawData(listId, csvData);
+    const metaSaved = await savePropertyList(listMeta);
+    const dataSaved = await saveRawData(listId, csvData);
 
     // Validate that data was actually saved
     if (!metaSaved || !dataSaved) {
@@ -170,7 +173,7 @@ export default function PropertyList() {
     }
 
     // Verify data was persisted
-    const verifyData = loadRawData(listId);
+    const verifyData = await loadRawData(listId);
     if (!verifyData || verifyData.length === 0) {
       setError('Data was not persisted to storage. Please check your browser storage settings and try again.');
       console.error('❌ Verification failed - saved data could not be loaded back');
@@ -183,7 +186,7 @@ export default function PropertyList() {
     setCurrentPage(0);
 
     // Refresh saved lists
-    const updated = loadAllPropertyLists();
+    const updated = await loadAllPropertyLists();
     setSavedLists(updated);
 
     // Clear upload state
@@ -197,7 +200,7 @@ export default function PropertyList() {
   }
 
   // --- View/toggle a saved list's data ---
-  function handleViewList(listId, data) {
+  async function handleViewList(listId, data) {
     // Toggle: if already viewing this list, hide it; otherwise show it
     if (selectedListId === listId && viewData.length > 0) {
       setViewData([]);
@@ -211,7 +214,7 @@ export default function PropertyList() {
     if (data) {
       setViewData(data);
     } else {
-      const rawData = loadRawData(listId);
+      const rawData = await loadRawData(listId);
       setViewData(rawData || []);
     }
   }
@@ -222,14 +225,14 @@ export default function PropertyList() {
   }
 
   // --- Delete a saved list (after confirmation) ---
-  function confirmDelete() {
+  async function confirmDelete() {
     const { listId } = deleteConfirm;
     setDeleteConfirm({ show: false, listId: null, listName: '' });
 
     console.log('🗑️ Deleting property list:', listId);
 
     // Delete from localStorage
-    const deleted = deletePropertyList(listId);
+    const deleted = await deletePropertyList(listId);
     if (!deleted) {
       setError('Failed to delete the list. Please try again.');
       console.error('❌ Delete failed for list:', listId);
@@ -237,7 +240,7 @@ export default function PropertyList() {
     }
 
     // Verify deletion
-    const verifyRawData = loadRawData(listId);
+    const verifyRawData = await loadRawData(listId);
     if (verifyRawData && verifyRawData.length > 0) {
       setError('List data was not fully deleted. Please try again.');
       console.error('❌ Verification failed - raw data still exists for:', listId);
@@ -245,7 +248,7 @@ export default function PropertyList() {
     }
 
     // Refresh saved lists
-    const updated = loadAllPropertyLists();
+    const updated = await loadAllPropertyLists();
     setSavedLists(updated);
 
     // Clear view if the deleted list was selected

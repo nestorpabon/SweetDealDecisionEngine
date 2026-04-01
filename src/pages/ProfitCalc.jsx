@@ -38,15 +38,18 @@ export default function ProfitCalc() {
 
   // --- Load deals and defaults on mount ---
   useEffect(() => {
-    const allDeals = loadAllDeals();
-    setDeals(allDeals);
+    async function load() {
+      const allDeals = await loadAllDeals();
+      setDeals(allDeals);
 
-    // Load user defaults for interest rate and term
-    const profile = loadUserProfile();
-    if (profile?.default_interest_rate) setSfInterestRate(profile.default_interest_rate);
-    if (profile?.default_loan_term_years) setSfTermYears(profile.default_loan_term_years);
+      // Load user defaults for interest rate and term
+      const profile = await loadUserProfile();
+      if (profile?.default_interest_rate) setSfInterestRate(profile.default_interest_rate);
+      if (profile?.default_loan_term_years) setSfTermYears(profile.default_loan_term_years);
 
-    console.log('💰 ProfitCalc: loaded', allDeals.length, 'deals');
+      console.log('💰 ProfitCalc: loaded', allDeals.length, 'deals');
+    }
+    load();
   }, []);
 
   // --- When a deal is selected, prefill the inputs ---
@@ -80,7 +83,7 @@ export default function ProfitCalc() {
   const financingResult = calcSellerFinancing(sfBuyPrice, sfAskingPrice, sfDownPct, sfInterestRate, sfTermYears);
 
   // --- Save calculation to selected deal ---
-  function handleApplyToDeal() {
+  async function handleApplyToDeal() {
     if (!selectedDealId) {
       setError('Please select a deal first to apply this calculation.');
       return;
@@ -131,8 +134,8 @@ export default function ProfitCalc() {
       };
     }
 
-    saveDeal(updated);
-    setDeals(loadAllDeals());
+    await saveDeal(updated);
+    setDeals(await loadAllDeals());
     console.log('💾 Applied calculation to deal:', selectedDealId);
     setError('');
   }

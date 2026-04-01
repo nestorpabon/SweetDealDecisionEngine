@@ -551,23 +551,16 @@ Raleigh, NC`,
 // ============================================================
 
 /**
- * Wipes all lpg_ data from localStorage while preserving the Claude API key.
- * Enumerates all keys first, then deletes — avoids the index-shift bug from
- * deleting during iteration of a live localStorage object.
+ * Wipes all lpg_ data from the backend API while preserving the Claude API key.
  */
-export function clearAllData() {
+export async function clearAllData() {
   // Preserve API key before any wipe
   const settings = loadSettings();
   const apiKey = settings?.claude_api_key || null;
 
-  // Collect all lpg_ keys into an array first, then delete
-  const keysToDelete = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('lpg_')) keysToDelete.push(key);
-  }
-  keysToDelete.forEach(key => localStorage.removeItem(key));
-  console.log(`Cleared ${keysToDelete.length} lpg_ storage keys`);
+  // Call backend API to clear all data
+  await fetch('http://localhost:3001/api/backup/clear', { method: 'DELETE' });
+  console.log('Cleared all data via API');
 
   // Restore API key if it existed before the wipe
   if (apiKey) {
@@ -582,35 +575,41 @@ export function clearAllData() {
  * After this runs, every module (Dashboard, MarketFinder, PropertyList, FilterList,
  * DealTracker, LetterGen, ProfitCalc) will show populated content on next page load.
  */
-export function seedDemoData() {
+export async function seedDemoData() {
   console.log('Seeding demo data — starting wipe-then-seed...');
 
   // Step 1: Wipe all existing data (preserves API key)
-  clearAllData();
+  await clearAllData();
 
   // Step 2: Seed user profile
-  saveUserProfile(DEMO_USER_PROFILE);
+  await saveUserProfile(DEMO_USER_PROFILE);
   console.log('Seeded: user profile (Blue Ridge Land Co.)');
 
   // Step 3: Seed target markets (Chatham County NC + Yavapai County AZ)
-  DEMO_MARKETS.forEach(m => saveMarket(m));
+  for (const m of DEMO_MARKETS) {
+    await saveMarket(m);
+  }
   console.log('Seeded: 2 target markets');
 
   // Step 4: Seed property list metadata and raw CSV data
-  savePropertyList(DEMO_PROPERTY_LIST);
-  saveRawData(DEMO_PROPERTY_LIST.id, DEMO_RAW_PROPERTIES);
+  await savePropertyList(DEMO_PROPERTY_LIST);
+  await saveRawData(DEMO_PROPERTY_LIST.id, DEMO_RAW_PROPERTIES);
   console.log('Seeded: 1 property list with 16 raw properties');
 
   // Step 5: Seed filtered list result
-  saveFilteredList(DEMO_FILTERED_LIST);
+  await saveFilteredList(DEMO_FILTERED_LIST);
   console.log('Seeded: 1 filtered list (10 properties passed filters)');
 
   // Step 6: Seed deals across full pipeline (new_lead through sold)
-  DEMO_DEALS.forEach(d => saveDeal(d));
+  for (const d of DEMO_DEALS) {
+    await saveDeal(d);
+  }
   console.log('Seeded: 6 deals across pipeline stages');
 
   // Step 7: Seed letters with pre-written body text
-  DEMO_LETTERS.forEach(l => saveLetter(l));
+  for (const l of DEMO_LETTERS) {
+    await saveLetter(l);
+  }
   console.log('Seeded: 3 letters with full body text');
 
   console.log('Demo data seed complete — reload the page to see all modules populated');

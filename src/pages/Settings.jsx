@@ -121,9 +121,9 @@ export default function Settings() {
 
   // --- Handler: confirm Load Demo Data ---
   // Wipes all data, seeds demo content, shows a success banner, then reloads after 1500ms
-  function handleConfirmLoad() {
+  async function handleConfirmLoad() {
     setShowLoadConfirm(false);
-    seedDemoData();
+    await seedDemoData();
     setDemoSuccess(true);
     console.log('Demo data seeded — reloading in 1500ms');
     setTimeout(() => window.location.reload(), 1500);
@@ -131,9 +131,9 @@ export default function Settings() {
 
   // --- Handler: confirm Clear All Data ---
   // Wipes all lpg_ data (preserves API key) then immediately reloads
-  function handleConfirmClear() {
+  async function handleConfirmClear() {
     setShowClearConfirm(false);
-    clearAllData();
+    await clearAllData();
     console.log('All data cleared — reloading');
     window.location.reload();
   }
@@ -438,8 +438,8 @@ export default function Settings() {
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    const data = exportAllData();
+                  onClick={async () => {
+                    const data = await exportAllData();
                     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
@@ -459,14 +459,14 @@ export default function Settings() {
                     type="file"
                     accept=".json"
                     className="hidden"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files[0];
                       if (!file) return;
                       const reader = new FileReader();
-                      reader.onload = (ev) => {
+                      reader.onload = async (ev) => {
                         try {
                           const backup = JSON.parse(ev.target.result);
-                          const count = importAllData(backup);
+                          const count = await importAllData(backup);
                           setSaved(false);
                           setError('');
                           alert(`Restored ${count} data entries successfully. Refresh the page to see changes.`);
