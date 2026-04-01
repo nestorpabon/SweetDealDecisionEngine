@@ -503,8 +503,7 @@ export default function PropertyList() {
           } records from your browser storage. This cannot be undone.`}
           confirmLabel="Delete"
           confirmColor="red"
-          cancelLabel="Cancel"
-          show={deleteConfirm.show}
+          isOpen={deleteConfirm.show}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteConfirm({ show: false, listId: null, listName: '' })}
         />
