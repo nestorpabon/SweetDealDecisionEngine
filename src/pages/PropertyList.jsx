@@ -8,6 +8,7 @@ import TopBar from '../components/Layout/TopBar';
 import ErrorMessage from '../components/shared/ErrorMessage';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import EmptyState from '../components/shared/EmptyState';
+import ConfirmModal from '../components/shared/ConfirmModal';
 import { parseCSVFile, autoDetectMapping } from '../utils/csvParser';
 import {
   savePropertyList,
@@ -49,6 +50,9 @@ export default function PropertyList() {
   const [error, setError] = useState('');
   const [savedLists, setSavedLists] = useState([]);
   const [selectedListId, setSelectedListId] = useState(null);
+
+  // Delete confirmation
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, listId: null, listName: '' });
 
   // CSV upload state
   const [csvHeaders, setCsvHeaders] = useState([]);
@@ -191,16 +195,45 @@ export default function PropertyList() {
     }
   }
 
-  // --- Delete a saved list ---
-  function handleDeleteList(listId) {
-    deletePropertyList(listId);
+  // --- Show delete confirmation modal ---
+  function showDeleteConfirm(listId, listName) {
+    setDeleteConfirm({ show: true, listId, listName });
+  }
+
+  // --- Delete a saved list (after confirmation) ---
+  function confirmDelete() {
+    const { listId } = deleteConfirm;
+    setDeleteConfirm({ show: false, listId: null, listName: '' });
+
+    console.log('🗑️ Deleting property list:', listId);
+
+    // Delete from localStorage
+    const deleted = deletePropertyList(listId);
+    if (!deleted) {
+      setError('Failed to delete the list. Please try again.');
+      console.error('❌ Delete failed for list:', listId);
+      return;
+    }
+
+    // Verify deletion
+    const verifyRawData = loadRawData(listId);
+    if (verifyRawData && verifyRawData.length > 0) {
+      setError('List data was not fully deleted. Please try again.');
+      console.error('❌ Verification failed - raw data still exists for:', listId);
+      return;
+    }
+
+    // Refresh saved lists
     const updated = loadAllPropertyLists();
     setSavedLists(updated);
 
+    // Clear view if the deleted list was selected
     if (selectedListId === listId) {
       setSelectedListId(null);
       setViewData([]);
     }
+
+    console.log('✅ Property list deleted:', listId);
   }
 
   // --- Pagination helpers ---
@@ -352,7 +385,7 @@ export default function PropertyList() {
                       {selectedListId === list.id && viewData.length > 0 ? 'Hide' : 'View'}
                     </button>
                     <button
-                      onClick={() => handleDeleteList(list.id)}
+                      onClick={() => showDeleteConfirm(list.id, list.county_name)}
                       className="text-sm text-red-600 hover:text-red-800 font-medium px-3 py-1"
                     >
                       Delete
@@ -435,6 +468,20 @@ export default function PropertyList() {
             message="Upload a CSV file from your county assessor or list service to get started. The app will help you map columns and store the data."
           />
         )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          title="Delete List?"
+          message={`Are you sure you want to delete "${deleteConfirm.listName}"? This will free up ${
+            savedLists.find((l) => l.id === deleteConfirm.listId)?.total_records?.toLocaleString?.() || '?'
+          } records from your browser storage. This cannot be undone.`}
+          confirmLabel="Delete"
+          confirmColor="red"
+          cancelLabel="Cancel"
+          show={deleteConfirm.show}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirm({ show: false, listId: null, listName: '' })}
+        />
       </PageWrapper>
     </>
   );
