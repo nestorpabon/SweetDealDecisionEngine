@@ -428,60 +428,123 @@ export default function Settings() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-2">Data Backup & Restore</h2>
           <p className="text-sm text-gray-500 mb-4">
-            Download all your data as a JSON file, or restore from a previous backup.
+            Download all your data as a JSON file, or restore from a previous backup. Your API key is included.
           </p>
 
-          <div className="flex flex-wrap gap-3">
-            {/* Download backup */}
-            <button
-              type="button"
-              onClick={() => {
-                const data = exportAllData();
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `sdde_backup_${new Date().toISOString().slice(0, 10)}.json`;
-                link.click();
-                URL.revokeObjectURL(link.href);
-                console.log('⬇️ Backup downloaded');
-              }}
-              className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-lg transition-colors"
-            >
-              📦 Download All My Data
-            </button>
+          <div className="space-y-4">
+            {/* Full backup/restore */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Complete Backup</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const data = exportAllData();
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `sdde_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    console.log('⬇️ Full backup downloaded');
+                  }}
+                  className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-colors text-sm"
+                >
+                  📦 Download All Data
+                </button>
 
-            {/* Upload restore */}
-            <label className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-lg transition-colors cursor-pointer">
-              📥 Upload Backup
-              <input
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    try {
-                      const backup = JSON.parse(ev.target.result);
-                      const count = importAllData(backup);
-                      setSaved(false);
-                      setError('');
-                      alert(`Restored ${count} data entries successfully. Refresh the page to see changes.`);
-                    } catch {
-                      setError('Invalid backup file. Please select a valid .json backup file.');
+                <label className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer text-sm">
+                  📥 Restore All Data
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        try {
+                          const backup = JSON.parse(ev.target.result);
+                          const count = importAllData(backup);
+                          setSaved(false);
+                          setError('');
+                          alert(`Restored ${count} data entries successfully. Refresh the page to see changes.`);
+                        } catch {
+                          setError('Invalid backup file. Please select a valid .json backup file.');
+                        }
+                      };
+                      reader.readAsText(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Deals, markets, property lists, letters, calculations, and API key.</p>
+            </div>
+
+            {/* API key only */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">API Key Only</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const settings = loadSettings() || {};
+                    if (!settings.claude_api_key) {
+                      alert('No API key to export. Please save an API key first.');
+                      return;
                     }
-                  };
-                  reader.readAsText(file);
-                  e.target.value = '';
-                }}
-              />
-            </label>
-          </div>
+                    const keyData = { claude_api_key: settings.claude_api_key };
+                    const blob = new Blob([JSON.stringify(keyData, null, 2)], { type: 'application/json' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `api_key_${new Date().toISOString().slice(0, 10)}.json`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    console.log('🔑 API key exported');
+                  }}
+                  className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-colors text-sm"
+                >
+                  🔑 Export API Key
+                </button>
 
-          <p className="text-xs text-gray-400 mt-3">
-            Backup includes all deals, markets, property lists, letters, and calculations.
-          </p>
+                <label className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer text-sm">
+                  🔑 Import API Key
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        try {
+                          const keyData = JSON.parse(ev.target.result);
+                          if (!keyData.claude_api_key) {
+                            alert('Invalid API key file. Please select a valid API key export file.');
+                            return;
+                          }
+                          const existing = loadSettings() || {};
+                          saveSettings({ ...existing, claude_api_key: keyData.claude_api_key });
+                          setApiKey(keyData.claude_api_key);
+                          setApiKeySaved(true);
+                          alert('API key imported successfully.');
+                          console.log('🔑 API key imported');
+                        } catch {
+                          alert('Invalid file. Please select a valid API key export file.');
+                        }
+                      };
+                      reader.readAsText(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Quick way to move your API key between devices or browsers.</p>
+            </div>
+          </div>
         </div>
 
         {/* --- Demo & Data Card --- */}
