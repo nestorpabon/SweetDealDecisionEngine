@@ -25,8 +25,10 @@ export default async function handler(request) {
       return json({ error: 'DATABASE_URL not configured' }, 500);
     }
     const sql = neon(process.env.DATABASE_URL);
-    const url = new URL(request.url);
-    const pathname = url.pathname;
+
+    // Parse pathname from request
+    // request.url might be relative (/api/health) or absolute
+    const pathname = new URL(request.url, 'http://localhost').pathname;
     const method = request.method;
     // ==================== Test Endpoints ====================
     if (pathname === '/api/health') {
