@@ -148,16 +148,16 @@ Property List is your data hub. You upload a CSV file (from MLS, county assessor
 
 SDDE needs to know which columns in your CSV map to its fields. For each field below, select the corresponding column from your CSV:
 
-| SDDE Field | What It Is | Example CSV Column |
-|-----------|-----------|-------------------|
-| **Owner Name** | Property owner | "Owner Name" or "Seller" |
-| **Property Address** | Full street address | "Address" or "Property Address" |
-| **County** | County name | "County" |
-| **State** | Two-letter state code | "State" |
-| **Acres** | Land size | "Acres" or "Lot Size" |
-| **Assessed Value** | County assessment | "Assessed Value" or "Tax Value" |
-| **Zoning** | Current zoning | "Zoning Code" |
-| **Mailing Address** | Owner's mailing address (if different) | "Owner Mailing Address" |
+| SDDE Field           | What It Is                             | Example CSV Column              |
+| -------------------- | -------------------------------------- | ------------------------------- |
+| **Owner Name**       | Property owner                         | "Owner Name" or "Seller"        |
+| **Property Address** | Full street address                    | "Address" or "Property Address" |
+| **County**           | County name                            | "County"                        |
+| **State**            | Two-letter state code                  | "State"                         |
+| **Acres**            | Land size                              | "Acres" or "Lot Size"           |
+| **Assessed Value**   | County assessment                      | "Assessed Value" or "Tax Value" |
+| **Zoning**           | Current zoning                         | "Zoning Code"                   |
+| **Mailing Address**  | Owner's mailing address (if different) | "Owner Mailing Address"         |
 
 **If your CSV doesn't have a field:** Leave it blank. SDDE will show "—" for that property.
 
@@ -171,6 +171,7 @@ SDDE needs to know which columns in your CSV map to its fields. For each field b
 ### View Saved Lists
 
 All your property lists appear at the bottom of the page. You can:
+
 - **View** — See the raw data again
 - **Delete** — Remove the list (this doesn't affect filtered lists created from it)
 
@@ -202,13 +203,13 @@ Filter List takes your raw property list and applies your investment rules (pric
 
 Configure what you're looking for:
 
-| Filter | What It Does | Example |
-|--------|------------|---------|
-| **Assessed Value Range** | Min and max property value | $5,000 - $50,000 |
-| **Acreage Range** | Min and max lot size | 0.5 - 10 acres |
-| **Zoning Codes** | Only include specific zones | Agricultural, Residential, Vacant |
-| **Owner State** | Target out-of-state owners | NC (exclude NC residents) |
-| **Exclude Keywords** | Filter out addresses with certain words | "Subdivision", "Golf Course" |
+| Filter                   | What It Does                            | Example                           |
+| ------------------------ | --------------------------------------- | --------------------------------- |
+| **Assessed Value Range** | Min and max property value              | $5,000 - $50,000                  |
+| **Acreage Range**        | Min and max lot size                    | 0.5 - 10 acres                    |
+| **Zoning Codes**         | Only include specific zones             | Agricultural, Residential, Vacant |
+| **Owner State**          | Target out-of-state owners              | NC (exclude NC residents)         |
+| **Exclude Keywords**     | Filter out addresses with certain words | "Subdivision", "Golf Course"      |
 
 ### Step 3: Review Results
 
@@ -243,6 +244,7 @@ Configure what you're looking for:
 ### How It Works
 
 The Offer Calculator uses standard land flipping formulas to suggest offer prices:
+
 - **Max Offer** = Assessed Value × Percentage (default 30%)
 - **Sweet Spot** = Max Offer adjusted for acreage and market trends
 - **Min Offer** = Lowest amount that meets your profit target
@@ -256,16 +258,17 @@ The Offer Calculator uses standard land flipping formulas to suggest offer price
 
 ### Step 2: Set Your Parameters
 
-| Setting | What It Controls | Example |
-|---------|-----------------|---------|
-| **Offer % of Assessed Value** | Your opening offer percentage | 30% (offer 30% of assessed value) |
-| **Market Adjustment** | Adjust based on local market conditions | -10% (market is soft, offer lower) |
-| **Acreage Multiplier** | Adjust based on lot size | 1.0x (standard) or 0.8x (small lot) |
-| **Target Profit** | Your profit goal for resale | $15,000 |
+| Setting                       | What It Controls                        | Example                             |
+| ----------------------------- | --------------------------------------- | ----------------------------------- |
+| **Offer % of Assessed Value** | Your opening offer percentage           | 30% (offer 30% of assessed value)   |
+| **Market Adjustment**         | Adjust based on local market conditions | -10% (market is soft, offer lower)  |
+| **Acreage Multiplier**        | Adjust based on lot size                | 1.0x (standard) or 0.8x (small lot) |
+| **Target Profit**             | Your profit goal for resale             | $15,000                             |
 
 ### Step 3: Review Calculations
 
 SDDE shows:
+
 - **Min Offer** — Lowest you should go to hit profit target
 - **Sweet Spot Offer** — Suggested opening offer
 - **Max Offer** — Highest the property is worth to you
@@ -295,6 +298,7 @@ SDDE shows:
 ### How It Works
 
 Module 5 generates professional, personalized letters to property owners. Choose between:
+
 - **Neutral Offer Letter** — Professional, straightforward offer
 - **Blind Offer Letter** — Doesn't reveal your offer price upfront (invitation to call you)
 
@@ -311,11 +315,13 @@ Both are AI-generated based on your profile and the property details.
 ### Step 2: Choose Letter Type
 
 **Neutral Offer Letter:**
+
 - Includes your specific offer amount
 - Professional tone, clear terms
 - Best for: Direct offers you want to move fast on
 
 **Blind Offer Letter:**
+
 - Doesn't mention a specific price
 - Invites owner to call for discussion
 - Best for: Testing buyer interest before committing to offer
@@ -365,6 +371,7 @@ Deal Tracker is the heart of your business. It tracks every deal from initial co
 ### Desktop View: Kanban Board
 
 **What You See:**
+
 - 9 columns, one for each stage
 - Each deal is a card showing:
   - Owner name
@@ -373,6 +380,7 @@ Deal Tracker is the heart of your business. It tracks every deal from initial co
   - Locked offer price (if set)
 
 **How to Use:**
+
 1. **Drag deals between columns** to move them through the pipeline
 2. **Click a card** to open the full deal details modal
 3. **Edit details** (offer price, owner info, notes, selling strategy)
@@ -381,6 +389,7 @@ Deal Tracker is the heart of your business. It tracks every deal from initial co
 ### Mobile View: Stage Selector
 
 On phones/tablets, instead of dragging:
+
 1. **Select a stage** from the dropdown at the top
 2. **Single column appears** showing all deals in that stage
 3. **Tap a deal** to edit
@@ -434,10 +443,12 @@ On phones/tablets, instead of dragging:
 Module 7 handles two selling strategies:
 
 **Wholesale:**
+
 - Buy property → Resell quickly to another investor for a small markup
 - Lower profit, faster exit, less holding time
 
 **Seller Financing:**
+
 - Buy property → Sell on installment plan to end buyer
 - Higher profit, monthly cash flow, longer holding period
 
@@ -537,6 +548,7 @@ Module 8 uses AI to generate a detailed buyer profile for each property. This he
 **Location:** ⚙️ Settings in sidebar.
 
 **Update your profile anytime:**
+
 - Name, company, email, phone
 - Default holding period and profit target
 - Click "Save Profile"

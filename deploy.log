@@ -1,0 +1,9 @@
+Vercel CLI 49.1.2
+Retrieving project…
+Deploying novapco/sweet-deal-decision-engine
+Uploading [--------------------] (0.0B/2.1MB)
+Uploading [=====---------------] (561.3KB/2.1MB)
+Uploading [==========----------] (1.1MB/2.1MB)
+Uploading [===============-----] (1.6MB/2.1MB)
+Uploading [====================] (2.1MB/2.1MB)
+Error: Environment Variable "DATABASE_URL" references Secret "database_url", which does not exist.

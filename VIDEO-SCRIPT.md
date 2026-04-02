@@ -43,6 +43,7 @@ Let's get started."
 When you first open the app, you'll land here—the Settings page. This is where you tell the system about your business and configure your API key.
 
 Start by completing your profile. Enter:
+
 - Your full name
 - Your company or business name
 - Your email and phone number
@@ -92,6 +93,7 @@ Paste your key here. You can click the 'Show' button to verify it's correct befo
 "The Dashboard is your command center. It gives you a bird's-eye view of your entire business.
 
 At the top, you see six key metrics:
+
 - Active Deals: How many deals you're currently working on
 - Letters Sent: How many property owners you've contacted
 - Deals Sold: Completed transactions
@@ -144,6 +146,7 @@ What's your minimum lot size? Let's target 2 acres or more.
 Which states should we focus on? Let's enter 'North Carolina, South Carolina, Virginia' to see markets across the Southeast."
 
 **[ACTION: Fill in criteria:
+
 - Offer percentage: 30
 - Minimum lot size: 2
 - States: "North Carolina, South Carolina, Virginia"]**
@@ -157,6 +160,7 @@ Which states should we focus on? Let's enter 'North Carolina, South Carolina, Vi
 
 **NARRATOR:**
 "Great! The AI has identified the top five counties that match your criteria. Each county shows:
+
 - Why it's a good fit for your investments
 - Average land prices
 - Population trends
@@ -199,6 +203,7 @@ Click 'Upload Property CSV'."
 
 **NARRATOR:**
 "Here's the CSV preview. Now you need to tell SDDE what each column represents. SDDE needs:
+
 - Owner Name
 - Property Address
 - County
@@ -214,6 +219,7 @@ Let me map these for you."
 **[ACTION: Show the column mapping dropdowns]**
 
 **[ACTION: For each field, click the dropdown and select the matching CSV column:
+
 - Owner Name → "Owner Name"
 - Property Address → "Address"
 - County → "County"
@@ -249,6 +255,7 @@ Let me map these for you."
 "Module 3: Filter List. This is where we apply the Jack Bosch methodology.
 
 The Filter List module takes your raw property list and applies smart filters to identify properties worth pursuing. You're looking for:
+
 - Properties in your price range
 - Correct lot size
 - Appropriate zoning
@@ -277,6 +284,7 @@ Owner State: This is the Jack Bosch secret. Target owners NOT in North Carolina.
 Exclude Keywords: Let's skip properties with 'Subdivision' in the address—those tend to have restrictions."
 
 **[ACTION: Fill in filter criteria:
+
 - Assessed Value: Min $10,000, Max $40,000
 - Acreage: Min 2, Max 20
 - Zoning: Select "Residential" and "Agricultural"
@@ -314,6 +322,7 @@ Click 'Save Filtered List' to save this for the next step."
 "Module 4: Offer Calculator. This is where you crunch the numbers.
 
 The Offer Calculator uses formulas to suggest fair offer prices based on:
+
 - The property's assessed value
 - Your target profit percentage
 - Market conditions
@@ -346,6 +355,7 @@ Acreage Multiplier: Small lots are harder to resell, so adjust lower. Larger lot
 Target Profit: How much profit do you want from this deal? If you buy at your sweet spot offer and resell later, you want to hit this target."
 
 **[ACTION: Show and adjust each parameter:
+
 - Offer %: 30
 - Market Adjustment: -5% (offer lower in hot market)
 - Acreage Multiplier: 1.0
@@ -353,6 +363,7 @@ Target Profit: How much profit do you want from this deal? If you buy at your sw
 
 **NARRATOR:**
 "As you adjust these, SDDE calculates in real-time:
+
 - Min Offer: Lowest price that hits your profit target
 - Sweet Spot: Recommended opening offer
 - Max Offer: Don't pay more than this
@@ -378,6 +389,7 @@ If the property shows negative profit, skip it—it's not a good deal. Otherwise
 "Module 5: Letter Generator. This is where you reach out to property owners.
 
 The Letter Generator creates personalized, professional letters using AI. You choose between:
+
 - Neutral Offer Letter: States your specific offer price directly
 - Blind Offer Letter: Doesn't mention price—invites them to call for discussion
 
@@ -432,6 +444,7 @@ In Module 6, you'll track when they respond and move the deal through your pipel
 Every deal you lock in automatically appears here. You'll track it through 9 pipeline stages, from initial contact to final sale.
 
 Let's look at the Kanban board. You see 9 columns, one for each stage:
+
 1. New Lead
 2. Letter Sent
 3. Seller Responded
@@ -443,6 +456,7 @@ Let's look at the Kanban board. You see 9 columns, one for each stage:
 9. Dead
 
 Each card shows:
+
 - Owner name
 - Property address
 - Acreage
@@ -458,6 +472,7 @@ As you progress through your deal, you drag cards between columns. When you call
 "On desktop, you drag cards. On mobile, you use a stage selector to filter the view to one stage at a time. Either way, it's easy to manage your pipeline.
 
 To edit a deal, click on any card. This opens a detail modal where you can:
+
 - Change the pipeline stage
 - Update owner contact info
 - Adjust offer prices
@@ -513,6 +528,7 @@ Let's calculate the profit for both strategies and see which makes more sense. C
 
 **NARRATOR:**
 "For a wholesale deal, enter:
+
 - Actual Purchase Price: What you paid
 - Closing Costs: Usually 2-5% of purchase price
 - Holding Costs: Monthly expenses (property taxes, insurance, maintenance) multiplied by how many months you held it
@@ -521,6 +537,7 @@ Let's calculate the profit for both strategies and see which makes more sense. C
 SDDE calculates your total costs and gross and net profit, and shows you profit margin percentage."
 
 **[ACTION: Fill in example numbers:
+
 - Purchase Price: $12,000
 - Closing Costs: $600
 - Holding Costs: $200 (2 months × $100/month)
@@ -528,6 +545,7 @@ SDDE calculates your total costs and gross and net profit, and shows you profit 
 
 **NARRATOR:**
 "SDDE shows:
+
 - Total Cost: $12,800
 - Net Profit: $5,200
 - Profit Margin: 41%
@@ -542,11 +560,13 @@ That's a solid wholesale deal. Now let's see what seller financing would look li
 
 **NARRATOR:**
 "For seller financing, you're selling the property on installment plan. You get:
+
 - Down payment upfront
 - Monthly payments for the term of the loan (usually 5-7 years)
 - Interest on the loan
 
 Enter:
+
 - Asking Price: What you'll offer the buyer
 - Down Payment %: How much they pay upfront
 - Interest Rate: Your interest (typically 8-12%)
@@ -556,6 +576,7 @@ Enter:
 SDDE calculates your total cash received and profit over the entire loan term."
 
 **[ACTION: Fill in example:
+
 - Asking Price: $22,000
 - Down Payment: 20%
 - Interest: 10%
@@ -579,6 +600,7 @@ You can compare both scenarios and choose which strategy fits your business mode
 "Module 8: Buyer Profile. The final module generates AI profiles of who will want to buy your property.
 
 Understanding your buyer helps you market the property effectively. Different properties attract different buyers:
+
 - Investors looking for cash flow
 - Families wanting a weekend retreat
 - Builders looking for development land
@@ -590,11 +612,13 @@ Let's generate a profile. Click 'Generate Profile'."
 
 **NARRATOR:**
 "Select a property you're listing for resale. Once you choose, SDDE's AI analyzes:
+
 - The property's features (size, zoning, location, etc.)
 - Market trends
 - What types of buyers typically want land like this
 
 Then it generates:
+
 - Buyer Type: The primary buyer for this property
 - Top 3 Motivations: Why they'd buy
 - Ideal Listing Description: Copy you can use on MLS, your website, or Facebook
@@ -609,6 +633,7 @@ This is your marketing roadmap."
 
 **NARRATOR:**
 "Here's the profile. Let's say it shows:
+
 - Buyer Type: 'First-time Land Investor'
 - Motivations: 'Investment potential, cash-on-cash return, tax advantages'
 - Listing Copy: [Show generated description]
@@ -664,24 +689,29 @@ If you ever switch devices or browsers, you can restore all your data by uploadi
 "Let's recap the complete workflow:
 
 **Week 1:**
+
 - Module 1: Research target markets using AI (Chatham County looks good)
 - Module 2: Download and upload a property CSV for that market
 - Module 3: Filter the list to find qualified deals (47 properties match your criteria)
 
 **Week 2:**
+
 - Module 4: Calculate fair offers for the top 10 properties
 - Module 5: Generate personalized letters and mail them to property owners
 
 **Week 3+:**
+
 - Module 6: As sellers respond, track deals in your Kanban board
 - As you negotiate and reach agreement, move deals through the pipeline
 - Once you close, move deal to 'Closed (Bought)'
 
 **Before Resale:**
+
 - Module 8: Generate a buyer profile to guide your marketing
 - Module 7: Calculate expected profit for wholesale vs. seller financing
 
 **Ongoing:**
+
 - Check Dashboard weekly to monitor business health
 - Backup your data weekly
 
@@ -699,6 +729,7 @@ That's the complete system. From market research to closed deal, it's all here."
 "You now have a complete automation system for land flipping. Instead of juggling spreadsheets and emails, everything is in one place.
 
 Your next steps:
+
 1. Set up your profile and API key
 2. Research a market with Module 1
 3. Upload a property list with Module 2
@@ -781,4 +812,3 @@ Thanks for watching, and good luck with your land flipping business!"
 - **YouTube:** Upload to YouTube (unlisted or public), embed on your site
 - **Website:** Add link on Settings or Support page: "Watch Tutorial Video"
 - **Email:** Send to client with note: "Here's your comprehensive walkthrough"
-

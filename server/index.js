@@ -52,7 +52,13 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 SDDE API server running on http://localhost:${PORT}`);
-  console.log(`📊 Frontend should connect to http://localhost:${PORT}/api/*`);
-});
+// Local development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 SDDE API server running on http://localhost:${PORT}`);
+    console.log(`📊 Frontend should connect to http://localhost:${PORT}/api/*`);
+  });
+}
+
+// Export for Vercel
+export default app;
