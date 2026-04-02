@@ -7,11 +7,11 @@
   },
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "destination": "/api"
     },
     {
-      "source": "/(?!.*\\.[a-zA-Z0-9]+$)(.*)",
+      "source": "/:path((?!.*\\..*|_next.*).*)",
       "destination": "/index.html"
     }
   ]
