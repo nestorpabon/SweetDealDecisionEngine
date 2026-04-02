@@ -1,38 +1,31 @@
-// Sweet Deal Decision Engine — Vercel API Routes
-// Minimal test implementation to verify function is working
+// Minimal test handler - no external dependencies
+export default async function handler(request) {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
 
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
-}
+  // Simple JSON response helper
+  const json = (data, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
 
-export default async function handler(req) {
-  const url = new URL(req.url);
-  const path = url.pathname;
-
-  console.log('🔍 API Handler called');
-  console.log('   URL:', req.url);
-  console.log('   Path:', path);
-  console.log('   Method:', req.method);
-
-  // Super simple test endpoint
-  if (path === '/api/test' || path === '/test') {
-    return jsonResponse({ message: 'API is working!', timestamp: new Date().toISOString(), receivedPath: path });
+  // Test endpoints
+  if (pathname === '/api/test') {
+    return json({ ok: true, message: 'API is working!' });
   }
 
-  if (path === '/api/health' || path === '/health') {
-    return jsonResponse({ status: 'ok' });
+  if (pathname === '/api/health') {
+    return json({ status: 'healthy' });
   }
 
-  // Frontend request - just return empty data for now
-  if (path.startsWith('/api/') || path === '/') {
-    return jsonResponse({ data: [] });
+  // Default - return empty data
+  if (pathname.startsWith('/api/')) {
+    return json({ data: [] });
   }
 
-  return jsonResponse({ error: 'Not found', path }, 404);
+  return json({ error: 'Not found' }, 404);
 }
