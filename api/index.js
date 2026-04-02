@@ -2,12 +2,6 @@ import { neon } from '@neondatabase/serverless';
 
 // Main API handler - routes all /api/* requests to Neon PostgreSQL
 export default async function handler(request) {
-  // Create a fresh Neon connection for this request
-  const sql = neon(process.env.DATABASE_URL);
-  const url = new URL(request.url);
-  const pathname = url.pathname;
-  const method = request.method;
-
   // CORS headers used on all responses
   const CORS = {
     'Content-Type': 'application/json',
@@ -21,11 +15,19 @@ export default async function handler(request) {
     new Response(JSON.stringify(data), { status, headers: CORS });
 
   // Handle CORS preflight
-  if (method === 'OPTIONS') {
+  if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS });
   }
 
   try {
+    // Create a fresh Neon connection for this request
+    if (!process.env.DATABASE_URL) {
+      return json({ error: 'DATABASE_URL not configured' }, 500);
+    }
+    const sql = neon(process.env.DATABASE_URL);
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+    const method = request.method;
     // ==================== Test Endpoints ====================
     if (pathname === '/api/health') {
       await sql`SELECT 1`;
