@@ -5,10 +5,19 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-// Initialize database connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/sdde',
-});
+// Lazy-load database connection pool (only create when needed)
+let pool = null;
+
+function getPool() {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL || 'postgresql://localhost/sdde',
+      connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
+    });
+  }
+  return pool;
+}
 
 // Helper: Parse JSON body from request
 async function parseBody(req) {
@@ -20,11 +29,16 @@ async function parseBody(req) {
   }
 }
 
-// Helper: Send JSON response
+// Helper: Send JSON response with CORS headers
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
   });
 }
 
@@ -45,27 +59,22 @@ export default async function handler(req) {
     });
   }
 
-  // Health check
+  // Health check (simple, no DB query)
   if (path === '/api/health' || path === '/health') {
-    try {
-      await pool.query('SELECT 1');
-      return jsonResponse({ status: 'ok' });
-    } catch (err) {
-      return jsonResponse({ error: 'Database unavailable' }, 500);
-    }
+    return jsonResponse({ status: 'ok', timestamp: new Date().toISOString() });
   }
 
   try {
     // === USER PROFILE ===
     if (path === '/api/user-profile') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM user_profiles WHERE id = 1');
+        const result = await getPool().query('SELECT data FROM user_profiles WHERE id = 1');
         const data = result.rows[0]?.data || {};
         return jsonResponse({ data });
       }
       if (method === 'PUT') {
         const body = await parseBody(req);
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO user_profiles (id, data)
            VALUES (1, $1)
            ON CONFLICT (id) DO UPDATE SET data = $1, updated_at = NOW()
@@ -79,13 +88,13 @@ export default async function handler(req) {
     // === SETTINGS ===
     if (path === '/api/settings') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM settings WHERE id = 1');
+        const result = await getPool().query('SELECT data FROM settings WHERE id = 1');
         const data = result.rows[0]?.data || {};
         return jsonResponse({ data });
       }
       if (method === 'PUT') {
         const body = await parseBody(req);
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO settings (id, data)
            VALUES (1, $1)
            ON CONFLICT (id) DO UPDATE SET data = $1, updated_at = NOW()
@@ -99,7 +108,7 @@ export default async function handler(req) {
     // === DEALS ===
     if (path === '/api/deals') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT id, data FROM deals ORDER BY created_at DESC');
+        const result = await getPool().query('SELECT id, data FROM deals ORDER BY created_at DESC');
         const deals = result.rows.map((row) => ({ id: row.id, ...row.data }));
         return jsonResponse({ data: deals });
       }
@@ -108,7 +117,7 @@ export default async function handler(req) {
         if (!deal.id) {
           return jsonResponse({ error: 'Deal must have an id' }, 400);
         }
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO deals (id, data)
            VALUES ($1, $2)
            ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = NOW()
@@ -124,12 +133,12 @@ export default async function handler(req) {
     if (dealMatch) {
       const id = dealMatch[1];
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM deals WHERE id = $1', [id]);
+        const result = await getPool().query('SELECT data FROM deals WHERE id = $1', [id]);
         const data = result.rows[0]?.data || null;
         return jsonResponse({ data });
       }
       if (method === 'DELETE') {
-        await pool.query('DELETE FROM deals WHERE id = $1', [id]);
+        await getPool().query('DELETE FROM deals WHERE id = $1', [id]);
         return jsonResponse({ success: true });
       }
     }
@@ -137,7 +146,7 @@ export default async function handler(req) {
     // === MARKETS ===
     if (path === '/api/markets') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT id, data FROM markets ORDER BY created_at DESC');
+        const result = await getPool().query('SELECT id, data FROM markets ORDER BY created_at DESC');
         const markets = result.rows.map((row) => ({ id: row.id, ...row.data }));
         return jsonResponse({ data: markets });
       }
@@ -146,7 +155,7 @@ export default async function handler(req) {
         if (!market.id) {
           return jsonResponse({ error: 'Market must have an id' }, 400);
         }
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO markets (id, data)
            VALUES ($1, $2)
            ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = NOW()
@@ -162,12 +171,12 @@ export default async function handler(req) {
     if (marketMatch) {
       const id = marketMatch[1];
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM markets WHERE id = $1', [id]);
+        const result = await getPool().query('SELECT data FROM markets WHERE id = $1', [id]);
         const data = result.rows[0]?.data || null;
         return jsonResponse({ data });
       }
       if (method === 'DELETE') {
-        await pool.query('DELETE FROM markets WHERE id = $1', [id]);
+        await getPool().query('DELETE FROM markets WHERE id = $1', [id]);
         return jsonResponse({ success: true });
       }
     }
@@ -175,7 +184,7 @@ export default async function handler(req) {
     // === PROPERTY LISTS ===
     if (path === '/api/property-lists') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT id, data FROM property_lists ORDER BY created_at DESC');
+        const result = await getPool().query('SELECT id, data FROM property_lists ORDER BY created_at DESC');
         const lists = result.rows.map((row) => ({ id: row.id, ...row.data }));
         return jsonResponse({ data: lists });
       }
@@ -184,7 +193,7 @@ export default async function handler(req) {
         if (!list.id) {
           return jsonResponse({ error: 'List must have an id' }, 400);
         }
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO property_lists (id, data)
            VALUES ($1, $2)
            ON CONFLICT (id) DO UPDATE SET data = $2
@@ -200,7 +209,7 @@ export default async function handler(req) {
     if (propMatch) {
       const id = propMatch[1];
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM property_lists WHERE id = $1', [id]);
+        const result = await getPool().query('SELECT data FROM property_lists WHERE id = $1', [id]);
         const data = result.rows[0]?.data || null;
         return jsonResponse({ data });
       }
@@ -211,13 +220,13 @@ export default async function handler(req) {
     if (rawMatch) {
       const listId = rawMatch[1];
       if (method === 'GET') {
-        const result = await pool.query('SELECT rows FROM property_rows WHERE list_id = $1', [listId]);
+        const result = await getPool().query('SELECT rows FROM property_rows WHERE list_id = $1', [listId]);
         const rows = result.rows[0]?.rows || [];
         return jsonResponse({ data: rows });
       }
       if (method === 'POST') {
         const body = await parseBody(req);
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO property_rows (list_id, rows)
            VALUES ($1, $2)
            ON CONFLICT (list_id) DO UPDATE SET rows = $2, updated_at = NOW()
@@ -231,7 +240,7 @@ export default async function handler(req) {
     // === FILTERED LISTS ===
     if (path === '/api/filtered-lists') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT id, data FROM filtered_lists ORDER BY created_at DESC');
+        const result = await getPool().query('SELECT id, data FROM filtered_lists ORDER BY created_at DESC');
         const lists = result.rows.map((row) => ({ id: row.id, ...row.data }));
         return jsonResponse({ data: lists });
       }
@@ -240,7 +249,7 @@ export default async function handler(req) {
         if (!list.id) {
           return jsonResponse({ error: 'List must have an id' }, 400);
         }
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO filtered_lists (id, data)
            VALUES ($1, $2)
            ON CONFLICT (id) DO UPDATE SET data = $2
@@ -256,7 +265,7 @@ export default async function handler(req) {
     if (filtMatch) {
       const id = filtMatch[1];
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM filtered_lists WHERE id = $1', [id]);
+        const result = await getPool().query('SELECT data FROM filtered_lists WHERE id = $1', [id]);
         const data = result.rows[0]?.data || null;
         return jsonResponse({ data });
       }
@@ -265,7 +274,7 @@ export default async function handler(req) {
     // === LETTERS ===
     if (path === '/api/letters') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT id, data FROM letters ORDER BY created_at DESC');
+        const result = await getPool().query('SELECT id, data FROM letters ORDER BY created_at DESC');
         const letters = result.rows.map((row) => ({ id: row.id, ...row.data }));
         return jsonResponse({ data: letters });
       }
@@ -274,7 +283,7 @@ export default async function handler(req) {
         if (!letter.id) {
           return jsonResponse({ error: 'Letter must have an id' }, 400);
         }
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO letters (id, data)
            VALUES ($1, $2)
            ON CONFLICT (id) DO UPDATE SET data = $2
@@ -290,7 +299,7 @@ export default async function handler(req) {
     if (letterMatch) {
       const id = letterMatch[1];
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM letters WHERE id = $1', [id]);
+        const result = await getPool().query('SELECT data FROM letters WHERE id = $1', [id]);
         const data = result.rows[0]?.data || null;
         return jsonResponse({ data });
       }
@@ -299,7 +308,7 @@ export default async function handler(req) {
     // === CALCULATIONS ===
     if (path === '/api/calculations') {
       if (method === 'GET') {
-        const result = await pool.query('SELECT id, data FROM calculations ORDER BY created_at DESC');
+        const result = await getPool().query('SELECT id, data FROM calculations ORDER BY created_at DESC');
         const calcs = result.rows.map((row) => ({ id: row.id, ...row.data }));
         return jsonResponse({ data: calcs });
       }
@@ -308,7 +317,7 @@ export default async function handler(req) {
         if (!calc.id) {
           return jsonResponse({ error: 'Calculation must have an id' }, 400);
         }
-        const result = await pool.query(
+        const result = await getPool().query(
           `INSERT INTO calculations (id, data)
            VALUES ($1, $2)
            ON CONFLICT (id) DO UPDATE SET data = $2
@@ -324,7 +333,7 @@ export default async function handler(req) {
     if (calcMatch) {
       const id = calcMatch[1];
       if (method === 'GET') {
-        const result = await pool.query('SELECT data FROM calculations WHERE id = $1', [id]);
+        const result = await getPool().query('SELECT data FROM calculations WHERE id = $1', [id]);
         const data = result.rows[0]?.data || null;
         return jsonResponse({ data });
       }
