@@ -20,25 +20,26 @@ export default async function handler(request) {
   }
 
   try {
-    // Create a fresh Neon connection for this request
-    if (!process.env.DATABASE_URL) {
-      return json({ error: 'DATABASE_URL not configured' }, 500);
-    }
-    const sql = neon(process.env.DATABASE_URL);
-
     // Parse pathname from request
     // request.url might be relative (/api/health) or absolute
     const pathname = new URL(request.url, 'http://localhost').pathname;
     const method = request.method;
+
     // ==================== Test Endpoints ====================
     if (pathname === '/api/health') {
-      await sql`SELECT 1`;
+      // Just return success - don't create DB connection for health checks
       return json({ status: 'healthy' });
     }
 
     if (pathname === '/api/test') {
       return json({ ok: true, message: 'API is working!' });
     }
+
+    // Create a fresh Neon connection for data requests
+    if (!process.env.DATABASE_URL) {
+      return json({ error: 'DATABASE_URL not configured' }, 500);
+    }
+    const sql = neon(process.env.DATABASE_URL);
 
     // ==================== Singleton Routes: User Profile ====================
     if (pathname === '/api/user-profile') {
