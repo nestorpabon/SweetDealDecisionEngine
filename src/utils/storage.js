@@ -1,8 +1,10 @@
 // API Client for Sweet Deal Decision Engine
 // Replaces localStorage — all functions are now async and use fetch
-// All endpoints point to http://localhost:3001/api
+// Points to Vercel backend in production, localhost in development
 
-const API = 'http://localhost:3001/api';
+const API = process.env.NODE_ENV === 'production'
+  ? '/api'
+  : 'http://localhost:3001/api';
 
 // --- ID Generation (unchanged — client-side) ---
 
@@ -110,8 +112,9 @@ export async function loadAllDeals() {
     const response = await fetch(`${API}/deals`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
-    console.log('📋 Loaded', result.data.length, 'deals');
-    return result.data || [];
+    const deals = Array.isArray(result.data) ? result.data : [];
+    console.log('📋 Loaded', deals.length, 'deals');
+    return deals;
   } catch (error) {
     console.error('❌ Failed to load all deals:', error);
     return [];
@@ -166,8 +169,9 @@ export async function loadAllMarkets() {
     const response = await fetch(`${API}/markets`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
-    console.log('📋 Loaded', result.data.length, 'markets');
-    return result.data || [];
+    const markets = Array.isArray(result.data) ? result.data : [];
+    console.log('📋 Loaded', markets.length, 'markets');
+    return markets;
   } catch (error) {
     console.error('❌ Failed to load all markets:', error);
     return [];
@@ -209,8 +213,9 @@ export async function loadAllPropertyLists() {
     const response = await fetch(`${API}/property-lists`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
-    console.log('📋 Loaded', result.data.length, 'property lists');
-    return result.data || [];
+    const lists = Array.isArray(result.data) ? result.data : [];
+    console.log('📋 Loaded', lists.length, 'property lists');
+    return lists;
   } catch (error) {
     console.error('❌ Failed to load all property lists:', error);
     return [];
@@ -252,11 +257,12 @@ export async function loadRawData(listId) {
     const response = await fetch(`${API}/raw-data/${listId}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
-    console.log('📋 Loaded raw data for list:', listId);
-    return result.data || null;
+    const data = Array.isArray(result.data) ? result.data : [];
+    console.log('📋 Loaded raw data for list:', listId, '-', data.length, 'rows');
+    return data;
   } catch (error) {
     console.error('❌ Failed to load raw data:', error);
-    return null;
+    return [];
   }
 }
 
