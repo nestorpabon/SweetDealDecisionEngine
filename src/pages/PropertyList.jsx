@@ -119,13 +119,16 @@ export default function PropertyList() {
 
     if (!listName.trim()) {
       setError('Please enter a name for this list (e.g. "Medina County March 2026").');
+      setLoading(false);
       return;
     }
     if (csvData.length === 0) {
       setError('No CSV data to save. Please upload a CSV file first.');
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
     console.log('💾 Saving property list:', listName);
 
     const listId = generateId('list');
@@ -169,6 +172,7 @@ export default function PropertyList() {
         `Browser storage limit is typically 5-10MB per site.`
       );
       console.error('❌ Save failed - metadata or raw data save returned false. Storage usage:', storageMB + 'MB across', storageKeyCount, 'keys');
+      setLoading(false);
       return;
     }
 
@@ -177,6 +181,7 @@ export default function PropertyList() {
     if (!verifyData || verifyData.length === 0) {
       setError('Data was not persisted to storage. Please check your browser storage settings and try again.');
       console.error('❌ Verification failed - saved data could not be loaded back');
+      setLoading(false);
       return;
     }
 
@@ -196,6 +201,7 @@ export default function PropertyList() {
     setListName('');
     setListState('');
 
+    setLoading(false);
     console.log('✅ Property list saved and verified:', listId);
   }
 
@@ -393,9 +399,14 @@ export default function PropertyList() {
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveList}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                    disabled={loading}
+                    className={`font-semibold px-6 py-3 rounded-lg transition-colors ${
+                      loading
+                        ? 'bg-blue-400 text-white cursor-not-allowed opacity-75'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
                   >
-                    Save Property List
+                    {loading ? '💾 Saving...' : 'Save Property List'}
                   </button>
                 </div>
               </>
