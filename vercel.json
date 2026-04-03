@@ -3,12 +3,9 @@
   "outputDirectory": "dist",
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/(?!.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)).*",
-      "dest": "/index.html"
+      "src": "/api/.*",
+      "dest": "/api"
     }
   ]
 }
+
