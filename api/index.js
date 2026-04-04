@@ -39,7 +39,14 @@ export default async function handler(request) {
     if (!process.env.DATABASE_URL) {
       return json({ error: 'DATABASE_URL not configured' }, 500);
     }
-    const sql = neon(process.env.DATABASE_URL);
+
+    let sql;
+    try {
+      sql = neon(process.env.DATABASE_URL);
+    } catch (err) {
+      console.error('Failed to create Neon connection:', err.message);
+      return json({ error: 'Database connection failed: ' + err.message }, 500);
+    }
 
     // ==================== Singleton Routes: User Profile ====================
     if (pathname === '/api/user-profile') {
