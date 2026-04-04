@@ -2,9 +2,10 @@
 // Replaces localStorage — all functions are now async and use fetch
 // Points to Vercel backend in production, localhost in development
 
-const API = process.env.NODE_ENV === 'production'
-  ? '/api'
-  : 'http://localhost:3001/api';
+// Use relative /api path in production, localhost in development
+const API = (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+  ? 'http://localhost:3001/api'
+  : '/api';
 
 // --- ID Generation (unchanged — client-side) ---
 
