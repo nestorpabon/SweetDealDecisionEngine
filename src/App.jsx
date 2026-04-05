@@ -16,6 +16,7 @@ import DealTracker from './pages/DealTracker';
 import ProfitCalc from './pages/ProfitCalc';
 import BuyerProfile from './pages/BuyerProfile';
 import Settings from './pages/Settings';
+import LoadingSpinner from './components/shared/LoadingSpinner';
 import { loadUserProfile } from './utils/storage';
 import { SidebarContext } from './contexts/SidebarContext';
 
@@ -37,8 +38,14 @@ export default function App() {
     check();
   }, []);
 
-  // Wait for profile check before rendering
-  if (!checked) return null;
+  // Wait for profile check before rendering — show spinner while loading
+  if (!checked) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   // Context value for sidebar control
   const sidebarCtx = {

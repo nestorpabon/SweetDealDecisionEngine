@@ -45,20 +45,23 @@ export default function Settings() {
 
   // --- Load existing profile and API key on mount ---
   useEffect(() => {
-    console.log('⚙️ Loading user profile and settings...');
-    const existing = loadUserProfile();
-    if (existing) {
-      setProfile(existing);
-      console.log('✅ Profile loaded:', existing.your_name);
-    } else {
-      console.log('📝 No profile found — starting fresh');
-    }
-    // Load saved API key from lpg_settings
-    const settings = loadSettings();
-    if (settings?.claude_api_key) {
-      setApiKey(settings.claude_api_key);
-      console.log('🔑 API key loaded from settings');
-    }
+    const loadData = async () => {
+      console.log('⚙️ Loading user profile and settings...');
+      const existing = await loadUserProfile();
+      if (existing) {
+        setProfile(existing);
+        console.log('✅ Profile loaded:', existing.your_name);
+      } else {
+        console.log('📝 No profile found — starting fresh');
+      }
+      // Load saved API key from lpg_settings
+      const settings = await loadSettings();
+      if (settings?.claude_api_key) {
+        setApiKey(settings.claude_api_key);
+        console.log('🔑 API key loaded from settings');
+      }
+    };
+    loadData();
   }, []);
 
   // --- Handle form field changes ---
