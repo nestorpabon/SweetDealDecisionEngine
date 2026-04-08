@@ -29,11 +29,18 @@ export default function App() {
 
   useEffect(() => {
     async function check() {
-      const profile = await loadUserProfile();
-      const hasProfile = profile && profile.your_name && profile.your_name.trim().length > 0;
-      setNeedsOnboarding(!hasProfile);
-      setChecked(true);
-      console.log('🏠 App init — profile exists:', hasProfile);
+      try {
+        const profile = await loadUserProfile();
+        const hasProfile = profile && profile.your_name && profile.your_name.trim().length > 0;
+        setNeedsOnboarding(!hasProfile);
+        setChecked(true);
+        console.log('🏠 App init — profile exists:', hasProfile);
+      } catch (err) {
+        console.error('❌ App init failed:', err);
+        // Assume no profile if fetch fails, still allow app to load
+        setNeedsOnboarding(true);
+        setChecked(true);
+      }
     }
     check();
   }, []);
