@@ -1,5 +1,20 @@
 import { neon } from '@neondatabase/serverless';
 
+// Singleton Neon SQL client — reuse across requests to avoid connection exhaustion
+let sqlClient = null;
+
+function getSql() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL not configured');
+  }
+
+  if (!sqlClient) {
+    sqlClient = neon(process.env.DATABASE_URL);
+  }
+
+  return sqlClient;
+}
+
 // Main API handler - routes all /api/* requests to Neon PostgreSQL
 export default async function handler(request) {
   // CORS headers used on all responses
@@ -27,24 +42,28 @@ export default async function handler(request) {
 
     // ==================== Test Endpoints ====================
     if (pathname === '/api/health') {
-      // Just return success - don't create DB connection for health checks
-      return json({ status: 'healthy' });
+      // Health check - just verify API is up, no DB
+      return json({ status: 'healthy', timestamp: new Date().toISOString() });
     }
 
     if (pathname === '/api/test') {
-      return json({ ok: true, message: 'API is working!' });
+      // Test endpoint - verify DB connection works
+      try {
+        const sql = getSql();
+        const result = await sql`SELECT 1 as test`;
+        return json({ ok: true, message: 'API and database working!', dbTest: result });
+      } catch (err) {
+        console.error('❌ DB test failed:', err.message);
+        return json({ ok: false, message: 'Database connection failed', error: err.message }, 500);
+      }
     }
 
-    // Create a fresh Neon connection for data requests
-    if (!process.env.DATABASE_URL) {
-      return json({ error: 'DATABASE_URL not configured' }, 500);
-    }
-
+    // Get the singleton Neon connection
     let sql;
     try {
-      sql = neon(process.env.DATABASE_URL);
+      sql = getSql();
     } catch (err) {
-      console.error('Failed to create Neon connection:', err.message);
+      console.error('❌ Neon connection failed:', err.message);
       return json({ error: 'Database connection failed: ' + err.message }, 500);
     }
 
