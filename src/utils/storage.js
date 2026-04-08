@@ -7,6 +7,16 @@ const API = (typeof window !== 'undefined' && window.location.hostname === 'loca
   ? 'http://localhost:3001/api'
   : '/api';
 
+// Fetch with timeout to prevent hanging on slow connections
+// Critical for app initialization which can't wait more than 5 seconds
+function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 // --- ID Generation (unchanged — client-side) ---
 
 export function generateId(prefix) {
@@ -19,11 +29,11 @@ export function generateId(prefix) {
 
 export async function saveUserProfile(profile) {
   try {
-    const response = await fetch(`${API}/user-profile`, {
+    const response = await fetchWithTimeout(`${API}/user-profile`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: profile }),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved user profile');
     return true;
@@ -35,7 +45,7 @@ export async function saveUserProfile(profile) {
 
 export async function loadUserProfile() {
   try {
-    const response = await fetch(`${API}/user-profile`);
+    const response = await fetchWithTimeout(`${API}/user-profile`, {}, 5000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📋 Loaded user profile');
@@ -50,11 +60,11 @@ export async function loadUserProfile() {
 
 export async function saveSettings(settings) {
   try {
-    const response = await fetch(`${API}/settings`, {
+    const response = await fetchWithTimeout(`${API}/settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: settings }),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved settings');
     return true;
@@ -66,7 +76,7 @@ export async function saveSettings(settings) {
 
 export async function loadSettings() {
   try {
-    const response = await fetch(`${API}/settings`);
+    const response = await fetchWithTimeout(`${API}/settings`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📋 Loaded settings');
@@ -81,11 +91,11 @@ export async function loadSettings() {
 
 export async function saveDeal(deal) {
   try {
-    const response = await fetch(`${API}/deals`, {
+    const response = await fetchWithTimeout(`${API}/deals`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(deal),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved deal:', deal.id);
     return true;
@@ -97,7 +107,7 @@ export async function saveDeal(deal) {
 
 export async function loadDeal(dealId) {
   try {
-    const response = await fetch(`${API}/deals/${dealId}`);
+    const response = await fetchWithTimeout(`${API}/deals/${dealId}`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📋 Loaded deal:', dealId);
@@ -110,7 +120,7 @@ export async function loadDeal(dealId) {
 
 export async function loadAllDeals() {
   try {
-    const response = await fetch(`${API}/deals`);
+    const response = await fetchWithTimeout(`${API}/deals`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     const deals = Array.isArray(result.data) ? result.data : [];
@@ -124,7 +134,7 @@ export async function loadAllDeals() {
 
 export async function deleteDeal(dealId) {
   try {
-    const response = await fetch(`${API}/deals/${dealId}`, { method: 'DELETE' });
+    const response = await fetchWithTimeout(`${API}/deals/${dealId}`, { method: 'DELETE' }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('🗑️ Deleted deal:', dealId);
     return true;
@@ -138,11 +148,11 @@ export async function deleteDeal(dealId) {
 
 export async function saveMarket(market) {
   try {
-    const response = await fetch(`${API}/markets`, {
+    const response = await fetchWithTimeout(`${API}/markets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(market),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved market:', market.id);
     return true;
@@ -154,7 +164,7 @@ export async function saveMarket(market) {
 
 export async function loadMarket(marketId) {
   try {
-    const response = await fetch(`${API}/markets/${marketId}`);
+    const response = await fetchWithTimeout(`${API}/markets/${marketId}`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📋 Loaded market:', marketId);
@@ -167,7 +177,7 @@ export async function loadMarket(marketId) {
 
 export async function loadAllMarkets() {
   try {
-    const response = await fetch(`${API}/markets`);
+    const response = await fetchWithTimeout(`${API}/markets`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     const markets = Array.isArray(result.data) ? result.data : [];
@@ -181,7 +191,7 @@ export async function loadAllMarkets() {
 
 export async function deleteMarket(marketId) {
   try {
-    const response = await fetch(`${API}/markets/${marketId}`, { method: 'DELETE' });
+    const response = await fetchWithTimeout(`${API}/markets/${marketId}`, { method: 'DELETE' }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('🗑️ Deleted market:', marketId);
     return true;
@@ -195,11 +205,11 @@ export async function deleteMarket(marketId) {
 
 export async function savePropertyList(list) {
   try {
-    const response = await fetch(`${API}/property-lists`, {
+    const response = await fetchWithTimeout(`${API}/property-lists`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(list),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved property list:', list.id);
     return true;
@@ -211,7 +221,7 @@ export async function savePropertyList(list) {
 
 export async function loadAllPropertyLists() {
   try {
-    const response = await fetch(`${API}/property-lists`);
+    const response = await fetchWithTimeout(`${API}/property-lists`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     const lists = Array.isArray(result.data) ? result.data : [];
@@ -225,7 +235,7 @@ export async function loadAllPropertyLists() {
 
 export async function deletePropertyList(listId) {
   try {
-    const response = await fetch(`${API}/property-lists/${listId}`, { method: 'DELETE' });
+    const response = await fetchWithTimeout(`${API}/property-lists/${listId}`, { method: 'DELETE' }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('🗑️ Deleted property list:', listId);
     return true;
@@ -239,11 +249,11 @@ export async function deletePropertyList(listId) {
 
 export async function saveRawData(listId, data) {
   try {
-    const response = await fetch(`${API}/raw-data/${listId}`, {
+    const response = await fetchWithTimeout(`${API}/raw-data/${listId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: data }),
-    });
+    }, 15000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved raw data for list:', listId);
     return true;
@@ -255,7 +265,7 @@ export async function saveRawData(listId, data) {
 
 export async function loadRawData(listId) {
   try {
-    const response = await fetch(`${API}/raw-data/${listId}`);
+    const response = await fetchWithTimeout(`${API}/raw-data/${listId}`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     const data = Array.isArray(result.data) ? result.data : [];
@@ -271,11 +281,11 @@ export async function loadRawData(listId) {
 
 export async function saveFilteredList(filtered) {
   try {
-    const response = await fetch(`${API}/filtered-lists/${filtered.id}`, {
+    const response = await fetchWithTimeout(`${API}/filtered-lists/${filtered.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(filtered),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved filtered list:', filtered.id);
     return true;
@@ -287,7 +297,7 @@ export async function saveFilteredList(filtered) {
 
 export async function loadFilteredList(filteredId) {
   try {
-    const response = await fetch(`${API}/filtered-lists/${filteredId}`);
+    const response = await fetchWithTimeout(`${API}/filtered-lists/${filteredId}`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📋 Loaded filtered list:', filteredId);
@@ -302,11 +312,11 @@ export async function loadFilteredList(filteredId) {
 
 export async function saveLetter(letter) {
   try {
-    const response = await fetch(`${API}/letters/${letter.id}`, {
+    const response = await fetchWithTimeout(`${API}/letters/${letter.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(letter),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved letter:', letter.id);
     return true;
@@ -318,7 +328,7 @@ export async function saveLetter(letter) {
 
 export async function loadLetter(letterId) {
   try {
-    const response = await fetch(`${API}/letters/${letterId}`);
+    const response = await fetchWithTimeout(`${API}/letters/${letterId}`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📋 Loaded letter:', letterId);
@@ -333,11 +343,11 @@ export async function loadLetter(letterId) {
 
 export async function saveCalculation(calc) {
   try {
-    const response = await fetch(`${API}/calculations/${calc.id}`, {
+    const response = await fetchWithTimeout(`${API}/calculations/${calc.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(calc),
-    });
+    }, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('💾 Saved calculation:', calc.id);
     return true;
@@ -349,7 +359,7 @@ export async function saveCalculation(calc) {
 
 export async function loadCalculation(calcId) {
   try {
-    const response = await fetch(`${API}/calculations/${calcId}`);
+    const response = await fetchWithTimeout(`${API}/calculations/${calcId}`, {}, 10000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📋 Loaded calculation:', calcId);
@@ -364,7 +374,7 @@ export async function loadCalculation(calcId) {
 
 export async function exportAllData() {
   try {
-    const response = await fetch(`${API}/backup/export`);
+    const response = await fetchWithTimeout(`${API}/backup/export`, {}, 30000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📦 Exported all data');
@@ -377,11 +387,11 @@ export async function exportAllData() {
 
 export async function importAllData(backup) {
   try {
-    const response = await fetch(`${API}/backup/import`, {
+    const response = await fetchWithTimeout(`${API}/backup/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(backup),
-    });
+    }, 30000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
     console.log('📥 Imported', result.count, 'keys');
