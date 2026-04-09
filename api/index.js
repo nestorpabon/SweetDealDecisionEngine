@@ -1,19 +1,22 @@
-import { neon } from '@neondatabase/serverless';
-
 // Module-level schema flag — persists across warm Lambda invocations
 let initialized = false;
 
 async function ensureSchema(sql) {
   if (initialized) return;
-  await sql`
-    CREATE TABLE IF NOT EXISTS property_rows (
-      list_id    TEXT PRIMARY KEY,
-      rows       JSONB NOT NULL DEFAULT '[]',
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-  initialized = true;
-  console.log('[schema] property_rows table ready');
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS property_rows (
+        list_id    TEXT PRIMARY KEY,
+        rows       JSONB NOT NULL DEFAULT '[]',
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+    initialized = true;
+    console.log('[schema] property_rows table ready');
+  } catch (err) {
+    console.error('[schema] failed:', err.message);
+    throw err;
+  }
 }
 
 export default async function handler(request) {
@@ -41,8 +44,10 @@ export default async function handler(request) {
     return json({ error: 'DATABASE_URL not set' }, 500);
   }
 
+  // Lazy-load neon only when needed (not on every cold start)
   let sql;
   try {
+    const { neon } = await import('@neondatabase/serverless');
     sql = neon(process.env.DATABASE_URL);
     await ensureSchema(sql);
   } catch (err) {
