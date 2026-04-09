@@ -68,6 +68,31 @@ export function generateId(prefix) {
   return `${prefix}_${timestamp}${random}`;
 }
 
+// --- API Fetch Helper ---
+
+// Fetch with timeout for raw CSV data calls (uses Neon backend)
+// 10s timeout — API should respond quickly when database is ready
+async function apiFetch(path, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(`/api${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. Check your connection and try again.');
+    }
+    throw err;
+  }
+}
+
 // --- User Profile ---
 
 // Save the user's business profile (used for letter generation)
@@ -142,14 +167,47 @@ export function savePropertyList(list) {
   return saveItem(key, list);
 }
 
-// Save raw CSV data separately (can be large)
-export function saveRawData(listId, data) {
-  return saveItem(`lpg_rawdata_${listId}`, data);
+// Save raw CSV rows to backend API (too large for localStorage)
+// Returns true on success, throws on error
+export async function saveRawData(listId, data) {
+  try {
+    const result = await apiFetch(`/raw-data/${listId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ rows: data }),
+    });
+    if (!result.ok) throw new Error('Failed to save CSV data');
+    console.log('💾 Saved raw data for list:', listId);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to save raw data:', error);
+    throw error;
+  }
 }
 
-// Load raw CSV data for a property list
-export function loadRawData(listId) {
-  return loadItem(`lpg_rawdata_${listId}`);
+// Load raw CSV rows from backend API
+// Returns array of rows, throws on error
+export async function loadRawData(listId) {
+  try {
+    const result = await apiFetch(`/raw-data/${listId}`);
+    const data = Array.isArray(result.data) ? result.data : [];
+    console.log('📋 Loaded raw data for list:', listId, '-', data.length, 'rows');
+    return data;
+  } catch (error) {
+    console.error('❌ Failed to load raw data:', error);
+    throw error;
+  }
+}
+
+// Delete raw CSV rows when property list is deleted
+export async function deleteRawData(listId) {
+  try {
+    await apiFetch(`/raw-data/${listId}`, { method: 'DELETE' });
+    console.log('🗑️ Deleted raw data for list:', listId);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to delete raw data:', error);
+    throw error;
+  }
 }
 
 // Load all property list metadata

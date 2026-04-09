@@ -16,6 +16,7 @@ import {
   loadAllPropertyLists,
   loadRawData,
   deletePropertyList,
+  deleteRawData,
   generateId,
 } from '../utils/storage';
 
@@ -245,8 +246,22 @@ export default function PropertyList() {
       return;
     }
 
+    // Also delete raw CSV data from API
+    try {
+      await deleteRawData(listId);
+    } catch (err) {
+      console.warn('⚠️ Failed to delete raw data from API:', err.message);
+      // Don't error — raw data deletion failure shouldn't block list deletion
+    }
+
     // Verify deletion
-    const verifyRawData = await loadRawData(listId);
+    let verifyRawData;
+    try {
+      verifyRawData = await loadRawData(listId);
+    } catch (err) {
+      // API error is expected after deletion (404)
+      verifyRawData = [];
+    }
     if (verifyRawData && verifyRawData.length > 0) {
       setError('List data was not fully deleted. Please try again.');
       console.error('❌ Verification failed - raw data still exists for:', listId);

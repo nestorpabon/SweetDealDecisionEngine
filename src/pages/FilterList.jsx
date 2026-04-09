@@ -71,7 +71,7 @@ export default function FilterList() {
   }
 
   // --- Run the filters on the selected list ---
-  function handleApplyFilters() {
+  async function handleApplyFilters() {
     setError('');
 
     if (!selectedList) {
@@ -80,7 +80,12 @@ export default function FilterList() {
     }
 
     // Load raw CSV data and apply column mapping
-    const rawData = loadRawData(selectedList.id);
+    try {
+      var rawData = await loadRawData(selectedList.id);
+    } catch (err) {
+      setError('Failed to load CSV data: ' + err.message);
+      return;
+    }
     if (!rawData || rawData.length === 0) {
       setError(
         `No data found for the list "${selectedList.county_name}". The data may not have been saved properly. ` +
