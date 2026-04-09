@@ -2,6 +2,8 @@ import { neon } from '@neondatabase/serverless';
 
 // Main API handler - routes all /api/* requests to Neon PostgreSQL
 export default async function handler(request) {
+  console.log('🚀 API handler invoked:', request.method, new URL(request.url, 'http://localhost').pathname);
+
   // CORS headers used on all responses
   const CORS = {
     'Content-Type': 'application/json',
@@ -25,19 +27,25 @@ export default async function handler(request) {
     const pathname = new URL(request.url, 'http://localhost').pathname;
     const method = request.method;
 
+    console.log('📍 Routing to:', pathname);
+
     // ==================== Test Endpoints ====================
     if (pathname === '/api/health') {
+      console.log('✅ Health check requested');
       // Health check - just verify API is up, no DB
       return json({ status: 'healthy', timestamp: new Date().toISOString() });
     }
 
     if (pathname === '/api/test') {
+      console.log('🧪 DB test requested');
       // Test endpoint - verify DB connection works
       try {
         if (!process.env.DATABASE_URL) {
           return json({ ok: false, message: 'DATABASE_URL not set' }, 500);
         }
+        console.log('🔗 Creating Neon connection...');
         const sql = neon(process.env.DATABASE_URL);
+        console.log('🔗 Running test query...');
         const result = await sql`SELECT 1 as test`;
         return json({ ok: true, message: 'API and database working!', dbTest: result });
       } catch (err) {
@@ -51,6 +59,7 @@ export default async function handler(request) {
       return json({ error: 'DATABASE_URL not configured' }, 500);
     }
 
+    console.log('🔗 Creating Neon connection for data request...');
     let sql;
     try {
       sql = neon(process.env.DATABASE_URL);
