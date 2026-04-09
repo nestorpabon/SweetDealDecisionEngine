@@ -207,7 +207,7 @@ export default function PropertyList() {
   }
 
   // --- View/toggle a saved list's data ---
-  function handleViewList(listId, data) {
+  function handleViewList(listId) {
     // Toggle: if already viewing this list, hide it; otherwise show it
     if (selectedListId === listId && viewData.length > 0) {
       setViewData([]);
@@ -218,14 +218,10 @@ export default function PropertyList() {
     setSelectedListId(listId);
     setCurrentPage(0);
 
-    if (data && data.length > 0) {
-      // Use provided data (from localStorage)
-      setViewData(data);
-    } else {
-      // Fallback: try to load from storage
-      const rawData = loadRawData(listId);
-      setViewData(Array.isArray(rawData) ? rawData : []);
-    }
+    // Load raw CSV data from storage
+    const rawData = loadRawData(listId);
+    console.log('📊 handleViewList - loaded data for', listId, ':', rawData?.length || 0, 'rows');
+    setViewData(Array.isArray(rawData) && rawData.length > 0 ? rawData : []);
   }
 
   // --- Show delete confirmation modal ---
@@ -456,7 +452,7 @@ export default function PropertyList() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleViewList(list.id, list)}
+                      onClick={() => handleViewList(list.id)}
                       className={`text-sm font-medium px-3 py-1 ${
                         selectedListId === list.id && viewData.length > 0
                           ? 'text-orange-600 hover:text-orange-800'
