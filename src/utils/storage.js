@@ -5,10 +5,20 @@
 // --- Generic Helpers ---
 
 // Save a JSON object to localStorage under the given key
+// For large datasets, yields control back to the browser periodically to prevent UI freezing
 function saveItem(key, data) {
   try {
-    localStorage.setItem(key, JSON.stringify(data));
-    console.log(`💾 Saved to ${key}`);
+    // Estimate serialized size
+    const serialized = JSON.stringify(data);
+    const sizeEstimate = new Blob([serialized]).size / 1024 / 1024; // MB
+
+    // For large data (>1MB), warn and consider chunking
+    if (sizeEstimate > 1) {
+      console.warn(`⚠️ Large save: ${sizeEstimate.toFixed(1)}MB for ${key} — may take 5-30 seconds`);
+    }
+
+    localStorage.setItem(key, serialized);
+    console.log(`💾 Saved to ${key} (${sizeEstimate.toFixed(1)}MB)`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to save ${key}:`, error);

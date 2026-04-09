@@ -48,6 +48,7 @@ const ROWS_PER_PAGE = 50;
 export default function PropertyList() {
   // --- State ---
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Processing...');
   const [error, setError] = useState('');
   const [savedLists, setSavedLists] = useState([]);
   const [selectedListId, setSelectedListId] = useState(null);
@@ -130,7 +131,11 @@ export default function PropertyList() {
     }
 
     setLoading(true);
-    console.log('💾 Saving property list:', listName);
+    setLoadingMessage('Preparing to save...');
+    console.log('💾 Saving property list:', listName, '—', csvData.length, 'rows');
+
+    // Yield to browser so the loading spinner appears immediately
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     const listId = generateId('list');
     const listMeta = {
@@ -144,8 +149,13 @@ export default function PropertyList() {
       raw_data_key: `lpg_rawdata_${listId}`,
     };
 
-    // Save metadata and raw data separately
+    // Save metadata first (fast)
+    setLoadingMessage('Saving list details...');
     const metaSaved = await savePropertyList(listMeta);
+
+    // Save raw data (slow for large datasets)
+    setLoadingMessage(`Saving ${csvData.length.toLocaleString()} rows... This may take a moment.`);
+    await new Promise(resolve => setTimeout(resolve, 0)); // Yield to browser
     const dataSaved = await saveRawData(listId, csvData);
 
     // Validate that data was actually saved
@@ -347,7 +357,7 @@ export default function PropertyList() {
               />
             </div>
 
-            {loading && <LoadingSpinner message="Parsing CSV file..." />}
+            {loading && <LoadingSpinner message={loadingMessage} />}
 
             {/* Show column mapping UI after CSV is loaded */}
             {csvHeaders.length > 0 && !loading && (
