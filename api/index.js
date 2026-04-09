@@ -1,20 +1,5 @@
 import { neon } from '@neondatabase/serverless';
 
-// Singleton Neon SQL client — reuse across requests to avoid connection exhaustion
-let sqlClient = null;
-
-function getSql() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL not configured');
-  }
-
-  if (!sqlClient) {
-    sqlClient = neon(process.env.DATABASE_URL);
-  }
-
-  return sqlClient;
-}
-
 // Main API handler - routes all /api/* requests to Neon PostgreSQL
 export default async function handler(request) {
   // CORS headers used on all responses
@@ -49,7 +34,10 @@ export default async function handler(request) {
     if (pathname === '/api/test') {
       // Test endpoint - verify DB connection works
       try {
-        const sql = getSql();
+        if (!process.env.DATABASE_URL) {
+          return json({ ok: false, message: 'DATABASE_URL not set' }, 500);
+        }
+        const sql = neon(process.env.DATABASE_URL);
         const result = await sql`SELECT 1 as test`;
         return json({ ok: true, message: 'API and database working!', dbTest: result });
       } catch (err) {
@@ -58,12 +46,16 @@ export default async function handler(request) {
       }
     }
 
-    // Get the singleton Neon connection
+    // Create Neon connection for data requests
+    if (!process.env.DATABASE_URL) {
+      return json({ error: 'DATABASE_URL not configured' }, 500);
+    }
+
     let sql;
     try {
-      sql = getSql();
+      sql = neon(process.env.DATABASE_URL);
     } catch (err) {
-      console.error('❌ Neon connection failed:', err.message);
+      console.error('❌ Failed to create Neon connection:', err.message);
       return json({ error: 'Database connection failed: ' + err.message }, 500);
     }
 
