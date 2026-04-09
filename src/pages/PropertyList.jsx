@@ -244,11 +244,11 @@ export default function PropertyList() {
       return;
     }
 
-    // Also delete raw CSV data from API
+    // Also delete raw CSV data from localStorage
     try {
-      await deleteRawData(listId);
+      deleteRawData(listId);
     } catch (err) {
-      console.warn('⚠️ Failed to delete raw data from API:', err.message);
+      console.warn('⚠️ Failed to delete raw data:', err.message);
       // Don't error — raw data deletion failure shouldn't block list deletion
     }
 
