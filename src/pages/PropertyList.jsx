@@ -154,11 +154,16 @@ export default function PropertyList() {
     const metaSaved = await savePropertyList(listMeta);
     console.log('📝 Metadata saved:', metaSaved);
 
-    // Save raw data (slow for large datasets)
-    setLoadingMessage(`Saving ${csvData.length.toLocaleString()} rows... This may take a moment.`);
+    // Save raw data (chunked to keep UI responsive)
+    const chunkSize = 500;
+    const chunkCount = Math.ceil(csvData.length / chunkSize);
+    setLoadingMessage(
+      `Saving ${csvData.length.toLocaleString()} rows in ${chunkCount} chunks... ` +
+      `(This may take 30-60 seconds for large files)`
+    );
     await new Promise(resolve => setTimeout(resolve, 0)); // Yield to browser
     const dataSaved = await saveRawData(listId, csvData);
-    console.log('💾 Raw data saved:', dataSaved, 'rows:', csvData.length);
+    console.log('💾 Raw data saved:', dataSaved, 'rows:', csvData.length, 'chunks:', chunkCount);
 
     // Validate that data was actually saved
     if (!metaSaved || !dataSaved) {

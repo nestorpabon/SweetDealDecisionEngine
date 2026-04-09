@@ -153,22 +153,102 @@ export function savePropertyList(list) {
   return saveItem(key, list);
 }
 
-// Save raw CSV data separately (can be large)
-// Uses localStorage directly, no backend API
-export function saveRawData(listId, data) {
-  return saveItem(`lpg_rawdata_${listId}`, data);
+// Save raw CSV data in chunks to prevent UI freeze
+// Splits large datasets into 500-row chunks to keep each localStorage write fast
+// Yields control to browser between chunks so UI stays responsive
+export async function saveRawData(listId, data) {
+  const CHUNK_SIZE = 500;
+  const chunks = [];
+
+  // Split data into chunks
+  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+    chunks.push(data.slice(i, i + CHUNK_SIZE));
+  }
+
+  console.log(`💾 Saving ${data.length} rows in ${chunks.length} chunks`);
+
+  // Save each chunk and yield to browser between writes
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    const key = `lpg_rawdata_${listId}_chunk_${i}`;
+    const saved = saveItem(key, chunk);
+
+    if (!saved) {
+      console.error(`❌ Failed to save chunk ${i} of ${chunks.length}`);
+      return false;
+    }
+
+    // Yield to browser so spinner updates are visible
+    if (i < chunks.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+  }
+
+  // Save manifest with chunk count
+  const manifest = {
+    listId,
+    totalRows: data.length,
+    chunkCount: chunks.length,
+    savedAt: new Date().toISOString(),
+  };
+  const manifestSaved = saveItem(`lpg_rawdata_${listId}_manifest`, manifest);
+
+  if (!manifestSaved) {
+    console.error('❌ Failed to save raw data manifest');
+    return false;
+  }
+
+  console.log(`✅ Saved ${chunks.length} chunks (${data.length} rows total)`);
+  return true;
 }
 
-// Load raw CSV data for a property list
-// Uses localStorage directly, no backend API
+// Load raw CSV data from chunks
+// Reconstructs the full dataset by loading all chunks in order
 export function loadRawData(listId) {
-  return loadItem(`lpg_rawdata_${listId}`);
+  // Load manifest to know how many chunks to expect
+  const manifest = loadItem(`lpg_rawdata_${listId}_manifest`);
+
+  if (!manifest || !manifest.chunkCount) {
+    console.warn(`⚠️ No manifest found for list ${listId} - trying legacy format`);
+    // Fallback: try loading single non-chunked key (for backwards compatibility)
+    const legacyData = loadItem(`lpg_rawdata_${listId}`);
+    return legacyData || null;
+  }
+
+  // Load all chunks and combine
+  const allRows = [];
+  for (let i = 0; i < manifest.chunkCount; i++) {
+    const chunk = loadItem(`lpg_rawdata_${listId}_chunk_${i}`);
+    if (!chunk || !Array.isArray(chunk)) {
+      console.error(`❌ Missing or invalid chunk ${i} of ${manifest.chunkCount}`);
+      return null; // Fail if any chunk is missing
+    }
+    allRows.push(...chunk);
+  }
+
+  console.log(`✅ Loaded ${allRows.length} rows from ${manifest.chunkCount} chunks`);
+  return allRows;
 }
 
 // Delete raw CSV data when property list is deleted
-// Uses localStorage directly, no backend API
+// Removes all chunks and manifest
 export function deleteRawData(listId) {
-  return deleteItem(`lpg_rawdata_${listId}`);
+  // First load manifest to know how many chunks to delete
+  const manifest = loadItem(`lpg_rawdata_${listId}_manifest`);
+
+  // Delete all chunks if manifest exists
+  if (manifest && manifest.chunkCount) {
+    for (let i = 0; i < manifest.chunkCount; i++) {
+      deleteItem(`lpg_rawdata_${listId}_chunk_${i}`);
+    }
+    deleteItem(`lpg_rawdata_${listId}_manifest`);
+    console.log(`🗑️ Deleted ${manifest.chunkCount} chunks for list ${listId}`);
+  }
+
+  // Also try deleting legacy single-key format for backwards compatibility
+  deleteItem(`lpg_rawdata_${listId}`);
+
+  return true;
 }
 
 // Load all property list metadata
