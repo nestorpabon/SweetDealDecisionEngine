@@ -152,14 +152,17 @@ export default function PropertyList() {
     // Save metadata first (fast)
     setLoadingMessage('Saving list details...');
     const metaSaved = await savePropertyList(listMeta);
+    console.log('📝 Metadata saved:', metaSaved);
 
     // Save raw data (slow for large datasets)
     setLoadingMessage(`Saving ${csvData.length.toLocaleString()} rows... This may take a moment.`);
     await new Promise(resolve => setTimeout(resolve, 0)); // Yield to browser
     const dataSaved = await saveRawData(listId, csvData);
+    console.log('💾 Raw data saved:', dataSaved, 'rows:', csvData.length);
 
     // Validate that data was actually saved
     if (!metaSaved || !dataSaved) {
+      console.error('❌ Save failed - metadata or raw data returned false');
       let storageUsage = 0;
       let storageKeyCount = 0;
       try {
@@ -231,7 +234,19 @@ export default function PropertyList() {
     // Load raw CSV data from storage
     const rawData = loadRawData(listId);
     console.log('📊 handleViewList - loaded data for', listId, ':', rawData?.length || 0, 'rows');
-    setViewData(Array.isArray(rawData) && rawData.length > 0 ? rawData : []);
+
+    // Validate the loaded data
+    if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+      console.error('❌ Failed to load raw data for list:', listId);
+      setError(
+        `Unable to load property data for this list. The data may not have been saved due to browser storage limits. ` +
+        `Try deleting older lists to free up space, or refresh the page and try again.`
+      );
+      setViewData([]);
+      return;
+    }
+
+    setViewData(rawData);
   }
 
   // --- Show delete confirmation modal ---
