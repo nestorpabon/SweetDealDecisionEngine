@@ -207,7 +207,7 @@ export default function PropertyList() {
   }
 
   // --- View/toggle a saved list's data ---
-  async function handleViewList(listId, data) {
+  function handleViewList(listId, data) {
     // Toggle: if already viewing this list, hide it; otherwise show it
     if (selectedListId === listId && viewData.length > 0) {
       setViewData([]);
@@ -218,11 +218,13 @@ export default function PropertyList() {
     setSelectedListId(listId);
     setCurrentPage(0);
 
-    if (data) {
+    if (data && data.length > 0) {
+      // Use provided data (from localStorage)
       setViewData(data);
     } else {
-      const rawData = await loadRawData(listId);
-      setViewData(rawData || []);
+      // Fallback: try to load from storage
+      const rawData = loadRawData(listId);
+      setViewData(Array.isArray(rawData) ? rawData : []);
     }
   }
 
