@@ -1,24 +1,67 @@
-// API Client for Sweet Deal Decision Engine
-// Replaces localStorage — all functions are now async and use fetch
-// Points to Vercel backend in production, localhost in development
+// All localStorage CRUD operations for the Sweet Deal Decision Engine
+// NEVER call localStorage directly in components — always use these helpers
+// All keys are prefixed with "lpg_" to avoid collisions
 
-// Use relative /api path in production, localhost in development
-const API = (typeof window !== 'undefined' && window.location.hostname === 'localhost')
-  ? 'http://localhost:3001/api'
-  : '/api';
+// --- Generic Helpers ---
 
-// Fetch with timeout to prevent hanging on slow connections
-// Critical for app initialization which can't wait more than 5 seconds
-function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timeoutId));
+// Save a JSON object to localStorage under the given key
+function saveItem(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    console.log(`💾 Saved to ${key}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to save ${key}:`, error);
+    return false;
+  }
 }
 
-// --- ID Generation (unchanged — client-side) ---
+// Load a JSON object from localStorage by key, returns null if not found
+function loadItem(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error(`❌ Failed to load ${key}:`, error);
+    return null;
+  }
+}
 
+// Delete an item from localStorage by key
+function deleteItem(key) {
+  try {
+    localStorage.removeItem(key);
+    console.log(`🗑️ Deleted ${key}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to delete ${key}:`, error);
+    return false;
+  }
+}
+
+// --- Index Helpers ---
+// Indexes track all IDs for a given entity type (e.g. lpg_deals_index = ["deal_001", "deal_002"])
+
+// Add an ID to an index list
+function addToIndex(indexKey, id) {
+  const index = loadItem(indexKey) || [];
+  if (!index.includes(id)) {
+    index.push(id);
+    saveItem(indexKey, index);
+  }
+}
+
+// Remove an ID from an index list
+function removeFromIndex(indexKey, id) {
+  const index = loadItem(indexKey) || [];
+  const updated = index.filter((item) => item !== id);
+  saveItem(indexKey, updated);
+}
+
+// --- ID Generation ---
+
+// Generate a unique ID with a prefix (e.g. "deal_abc123")
 export function generateId(prefix) {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 8);
@@ -27,377 +70,173 @@ export function generateId(prefix) {
 
 // --- User Profile ---
 
-export async function saveUserProfile(profile) {
-  try {
-    const response = await fetchWithTimeout(`${API}/user-profile`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: profile }),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved user profile');
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save user profile:', error);
-    return false;
-  }
+// Save the user's business profile (used for letter generation)
+export function saveUserProfile(profile) {
+  return saveItem('lpg_user_profile', profile);
 }
 
-export async function loadUserProfile() {
-  try {
-    const response = await fetchWithTimeout(`${API}/user-profile`, {}, 5000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📋 Loaded user profile');
-    return result.data || null;
-  } catch (error) {
-    console.error('❌ Failed to load user profile:', error);
-    return null;
-  }
-}
-
-// --- Settings ---
-
-export async function saveSettings(settings) {
-  try {
-    const response = await fetchWithTimeout(`${API}/settings`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: settings }),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved settings');
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save settings:', error);
-    return false;
-  }
-}
-
-export async function loadSettings() {
-  try {
-    const response = await fetchWithTimeout(`${API}/settings`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📋 Loaded settings');
-    return result.data || null;
-  } catch (error) {
-    console.error('❌ Failed to load settings:', error);
-    return null;
-  }
+// Load the user's business profile
+export function loadUserProfile() {
+  return loadItem('lpg_user_profile');
 }
 
 // --- Deals ---
 
-export async function saveDeal(deal) {
-  try {
-    const response = await fetchWithTimeout(`${API}/deals`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(deal),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved deal:', deal.id);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save deal:', error);
-    return false;
-  }
+// Save a deal object to localStorage and update the deals index
+export function saveDeal(deal) {
+  const key = `lpg_deal_${deal.id}`;
+  addToIndex('lpg_deals_index', deal.id);
+  return saveItem(key, deal);
 }
 
-export async function loadDeal(dealId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/deals/${dealId}`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📋 Loaded deal:', dealId);
-    return result.data || null;
-  } catch (error) {
-    console.error('❌ Failed to load deal:', error);
-    return null;
-  }
+// Load a single deal by its ID
+export function loadDeal(dealId) {
+  return loadItem(`lpg_deal_${dealId}`);
 }
 
-export async function loadAllDeals() {
-  try {
-    const response = await fetchWithTimeout(`${API}/deals`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    const deals = Array.isArray(result.data) ? result.data : [];
-    console.log('📋 Loaded', deals.length, 'deals');
-    return deals;
-  } catch (error) {
-    console.error('❌ Failed to load all deals:', error);
-    return [];
-  }
+// Load all deals from localStorage
+export function loadAllDeals() {
+  const index = loadItem('lpg_deals_index') || [];
+  console.log(`📋 Loading ${index.length} deals`);
+  return index.map((id) => loadDeal(id)).filter(Boolean);
 }
 
-export async function deleteDeal(dealId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/deals/${dealId}`, { method: 'DELETE' }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('🗑️ Deleted deal:', dealId);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to delete deal:', error);
-    return false;
-  }
+// Delete a deal and remove it from the index
+export function deleteDeal(dealId) {
+  removeFromIndex('lpg_deals_index', dealId);
+  return deleteItem(`lpg_deal_${dealId}`);
 }
 
-// --- Markets ---
+// --- Target Markets ---
 
-export async function saveMarket(market) {
-  try {
-    const response = await fetchWithTimeout(`${API}/markets`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(market),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved market:', market.id);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save market:', error);
-    return false;
-  }
+// Save a target market research result
+export function saveMarket(market) {
+  const key = `lpg_market_${market.id}`;
+  addToIndex('lpg_markets_index', market.id);
+  return saveItem(key, market);
 }
 
-export async function loadMarket(marketId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/markets/${marketId}`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📋 Loaded market:', marketId);
-    return result.data || null;
-  } catch (error) {
-    console.error('❌ Failed to load market:', error);
-    return null;
-  }
+// Load a single market by its ID
+export function loadMarket(marketId) {
+  return loadItem(`lpg_market_${marketId}`);
 }
 
-export async function loadAllMarkets() {
-  try {
-    const response = await fetchWithTimeout(`${API}/markets`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    const markets = Array.isArray(result.data) ? result.data : [];
-    console.log('📋 Loaded', markets.length, 'markets');
-    return markets;
-  } catch (error) {
-    console.error('❌ Failed to load all markets:', error);
-    return [];
-  }
+// Load all saved markets
+export function loadAllMarkets() {
+  const index = loadItem('lpg_markets_index') || [];
+  return index.map((id) => loadMarket(id)).filter(Boolean);
 }
 
-export async function deleteMarket(marketId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/markets/${marketId}`, { method: 'DELETE' }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('🗑️ Deleted market:', marketId);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to delete market:', error);
-    return false;
-  }
+// Delete a market and remove it from the index
+export function deleteMarket(marketId) {
+  removeFromIndex('lpg_markets_index', marketId);
+  return deleteItem(`lpg_market_${marketId}`);
 }
 
-// --- Property Lists ---
+// --- Property Lists (raw CSV data) ---
 
-export async function savePropertyList(list) {
-  try {
-    const response = await fetchWithTimeout(`${API}/property-lists`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(list),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved property list:', list.id);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save property list:', error);
-    return false;
-  }
+// Save a property list metadata object
+export function savePropertyList(list) {
+  const key = `lpg_list_${list.id}`;
+  addToIndex('lpg_lists_index', list.id);
+  return saveItem(key, list);
 }
 
-export async function loadAllPropertyLists() {
-  try {
-    const response = await fetchWithTimeout(`${API}/property-lists`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    const lists = Array.isArray(result.data) ? result.data : [];
-    console.log('📋 Loaded', lists.length, 'property lists');
-    return lists;
-  } catch (error) {
-    console.error('❌ Failed to load all property lists:', error);
-    return [];
-  }
+// Save raw CSV data separately (can be large)
+export function saveRawData(listId, data) {
+  return saveItem(`lpg_rawdata_${listId}`, data);
 }
 
-export async function deletePropertyList(listId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/property-lists/${listId}`, { method: 'DELETE' }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('🗑️ Deleted property list:', listId);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to delete property list:', error);
-    return false;
-  }
+// Load raw CSV data for a property list
+export function loadRawData(listId) {
+  return loadItem(`lpg_rawdata_${listId}`);
 }
 
-// --- Raw CSV Data ---
-
-export async function saveRawData(listId, data) {
-  try {
-    const response = await fetchWithTimeout(`${API}/raw-data/${listId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: data }),
-    }, 15000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved raw data for list:', listId);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save raw data:', error);
-    return false;
-  }
+// Load all property list metadata
+export function loadAllPropertyLists() {
+  const index = loadItem('lpg_lists_index') || [];
+  return index.map((id) => loadItem(`lpg_list_${id}`)).filter(Boolean);
 }
 
-export async function loadRawData(listId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/raw-data/${listId}`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    const data = Array.isArray(result.data) ? result.data : [];
-    console.log('📋 Loaded raw data for list:', listId, '-', data.length, 'rows');
-    return data;
-  } catch (error) {
-    console.error('❌ Failed to load raw data:', error);
-    return [];
-  }
+// Delete a property list and its raw data
+export function deletePropertyList(listId) {
+  removeFromIndex('lpg_lists_index', listId);
+  deleteItem(`lpg_rawdata_${listId}`);
+  return deleteItem(`lpg_list_${listId}`);
 }
 
 // --- Filtered Lists ---
 
-export async function saveFilteredList(filtered) {
-  try {
-    const response = await fetchWithTimeout(`${API}/filtered-lists/${filtered.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(filtered),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved filtered list:', filtered.id);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save filtered list:', error);
-    return false;
-  }
+// Save a filtered list result
+export function saveFilteredList(filtered) {
+  return saveItem(`lpg_filtered_${filtered.id}`, filtered);
 }
 
-export async function loadFilteredList(filteredId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/filtered-lists/${filteredId}`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📋 Loaded filtered list:', filteredId);
-    return result.data || null;
-  } catch (error) {
-    console.error('❌ Failed to load filtered list:', error);
-    return null;
-  }
+// Load a filtered list by ID
+export function loadFilteredList(filteredId) {
+  return loadItem(`lpg_filtered_${filteredId}`);
 }
 
 // --- Letters ---
 
-export async function saveLetter(letter) {
-  try {
-    const response = await fetchWithTimeout(`${API}/letters/${letter.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(letter),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved letter:', letter.id);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save letter:', error);
-    return false;
-  }
+// Save a generated letter
+export function saveLetter(letter) {
+  return saveItem(`lpg_letter_${letter.id}`, letter);
 }
 
-export async function loadLetter(letterId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/letters/${letterId}`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📋 Loaded letter:', letterId);
-    return result.data || null;
-  } catch (error) {
-    console.error('❌ Failed to load letter:', error);
-    return null;
-  }
+// Load a letter by ID
+export function loadLetter(letterId) {
+  return loadItem(`lpg_letter_${letterId}`);
 }
 
-// --- Calculations ---
+// --- Profit Calculations ---
 
-export async function saveCalculation(calc) {
-  try {
-    const response = await fetchWithTimeout(`${API}/calculations/${calc.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(calc),
-    }, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    console.log('💾 Saved calculation:', calc.id);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to save calculation:', error);
-    return false;
-  }
+// Save a profit calculation result
+export function saveCalculation(calc) {
+  return saveItem(`lpg_calc_${calc.id}`, calc);
 }
 
-export async function loadCalculation(calcId) {
-  try {
-    const response = await fetchWithTimeout(`${API}/calculations/${calcId}`, {}, 10000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📋 Loaded calculation:', calcId);
-    return result.data || null;
-  } catch (error) {
-    console.error('❌ Failed to load calculation:', error);
-    return null;
-  }
+// Load a calculation by ID
+export function loadCalculation(calcId) {
+  return loadItem(`lpg_calc_${calcId}`);
+}
+
+// --- App Settings ---
+
+// Save app-level settings
+export function saveSettings(settings) {
+  return saveItem('lpg_settings', settings);
+}
+
+// Load app-level settings
+export function loadSettings() {
+  return loadItem('lpg_settings');
 }
 
 // --- Backup & Restore ---
 
-export async function exportAllData() {
-  try {
-    const response = await fetchWithTimeout(`${API}/backup/export`, {}, 30000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📦 Exported all data');
-    return result.data || {};
-  } catch (error) {
-    console.error('❌ Failed to export data:', error);
-    return null;
+// Export all lpg_ data as a single JSON object (for backup)
+export function exportAllData() {
+  const backup = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('lpg_')) {
+      backup[key] = loadItem(key);
+    }
   }
+  console.log(`📦 Exported ${Object.keys(backup).length} keys`);
+  return backup;
 }
 
-export async function importAllData(backup) {
-  try {
-    const response = await fetchWithTimeout(`${API}/backup/import`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(backup),
-    }, 30000);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    console.log('📥 Imported', result.count, 'keys');
-    return result.count || 0;
-  } catch (error) {
-    console.error('❌ Failed to import data:', error);
-    return 0;
+// Import a backup JSON object, replacing all lpg_ data
+export function importAllData(backup) {
+  let count = 0;
+  for (const [key, value] of Object.entries(backup)) {
+    if (key.startsWith('lpg_')) {
+      saveItem(key, value);
+      count++;
+    }
   }
+  console.log(`📥 Imported ${count} keys`);
+  return count;
 }
