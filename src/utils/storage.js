@@ -231,8 +231,10 @@ export function loadRawData(listId) {
 }
 
 // Delete raw CSV data when property list is deleted
-// Removes all chunks and manifest
+// Removes all chunks (with or without manifest) and legacy single-key format
 export function deleteRawData(listId) {
+  let deletedCount = 0;
+
   // First load manifest to know how many chunks to delete
   const manifest = loadItem(`lpg_rawdata_${listId}_manifest`);
 
@@ -240,9 +242,33 @@ export function deleteRawData(listId) {
   if (manifest && manifest.chunkCount) {
     for (let i = 0; i < manifest.chunkCount; i++) {
       deleteItem(`lpg_rawdata_${listId}_chunk_${i}`);
+      deletedCount++;
     }
     deleteItem(`lpg_rawdata_${listId}_manifest`);
-    console.log(`🗑️ Deleted ${manifest.chunkCount} chunks for list ${listId}`);
+    console.log(`🗑️ Deleted ${deletedCount} chunks (from manifest) for list ${listId}`);
+  } else {
+    // No manifest — scan localStorage for orphaned chunks (incomplete saves)
+    // This handles cases where a save started but didn't complete
+    for (let i = 0; i < 500; i++) {
+      // Try up to 500 chunks (reasonable upper bound)
+      const chunkKey = `lpg_rawdata_${listId}_chunk_${i}`;
+      try {
+        const item = localStorage.getItem(chunkKey);
+        if (item) {
+          deleteItem(chunkKey);
+          deletedCount++;
+        } else {
+          // Stop scanning once we hit a missing chunk
+          if (i > 0) break;
+        }
+      } catch (e) {
+        console.warn(`⚠️ Error scanning chunk ${i}:`, e);
+        break;
+      }
+    }
+    if (deletedCount > 0) {
+      console.log(`🗑️ Deleted ${deletedCount} orphaned chunks (no manifest) for list ${listId}`);
+    }
   }
 
   // Also try deleting legacy single-key format for backwards compatibility
@@ -255,6 +281,30 @@ export function deleteRawData(listId) {
 export function loadAllPropertyLists() {
   const index = loadItem('lpg_lists_index') || [];
   return index.map((id) => loadItem(`lpg_list_${id}`)).filter(Boolean);
+}
+
+// Clear ALL data from localStorage (emergency cleanup)
+// Used when storage is full and delete isn't working properly
+export function clearAllAppData() {
+  const keysToDelete = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('lpg_')) {
+      keysToDelete.push(key);
+    }
+  }
+
+  keysToDelete.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+      console.log(`🗑️ Deleted ${key}`);
+    } catch (e) {
+      console.error(`❌ Failed to delete ${key}:`, e);
+    }
+  });
+
+  console.log(`✅ Cleared ${keysToDelete.length} app data keys from localStorage`);
+  return keysToDelete.length;
 }
 
 // Delete a property list and its raw data
