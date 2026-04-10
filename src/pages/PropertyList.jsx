@@ -154,16 +154,18 @@ export default function PropertyList() {
     const metaSaved = await savePropertyList(listMeta);
     console.log('📝 Metadata saved:', metaSaved);
 
-    // Save raw data (chunked to keep UI responsive)
-    const chunkSize = 500;
-    const chunkCount = Math.ceil(csvData.length / chunkSize);
-    setLoadingMessage(
-      `Saving ${csvData.length.toLocaleString()} rows in ${chunkCount} chunks... ` +
-      `(This may take 30-60 seconds for large files)`
-    );
+    // Save raw data to backend API (no localStorage limit)
+    setLoadingMessage(`Uploading ${csvData.length.toLocaleString()} rows to database...`);
     await new Promise(resolve => setTimeout(resolve, 0)); // Yield to browser
-    const dataSaved = await saveRawData(listId, csvData);
-    console.log('💾 Raw data saved:', dataSaved, 'rows:', csvData.length, 'chunks:', chunkCount);
+    try {
+      await saveRawData(listId, csvData);
+      console.log('💾 Raw data uploaded:', csvData.length, 'rows');
+    } catch (err) {
+      setError(`Failed to save CSV data to database: ${err.message}`);
+      setLoading(false);
+      return;
+    }
+    const dataSaved = true;
 
     // Validate that data was actually saved
     if (!metaSaved || !dataSaved) {
@@ -225,7 +227,7 @@ export default function PropertyList() {
   }
 
   // --- View/toggle a saved list's data ---
-  function handleViewList(listId) {
+  async function handleViewList(listId) {
     // Toggle: if already viewing this list, hide it; otherwise show it
     if (selectedListId === listId && viewData.length > 0) {
       setViewData([]);
@@ -235,23 +237,28 @@ export default function PropertyList() {
 
     setSelectedListId(listId);
     setCurrentPage(0);
+    setError('');
 
-    // Load raw CSV data from storage
-    const rawData = loadRawData(listId);
-    console.log('📊 handleViewList - loaded data for', listId, ':', rawData?.length || 0, 'rows');
+    // Load raw CSV data from backend API
+    try {
+      const rawData = await loadRawData(listId);
+      console.log('📊 handleViewList - loaded data for', listId, ':', rawData?.length || 0, 'rows');
 
-    // Validate the loaded data
-    if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-      console.error('❌ Failed to load raw data for list:', listId);
-      setError(
-        `Unable to load property data for this list. The data may not have been saved due to browser storage limits. ` +
-        `Try deleting older lists to free up space, or refresh the page and try again.`
-      );
+      // Validate the loaded data
+      if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+        console.error('❌ Failed to load raw data for list:', listId);
+        setError('Unable to load property data for this list. Please try again.');
+        setViewData([]);
+        return;
+      }
+
+      setViewData(rawData);
+    } catch (err) {
+      console.error('❌ Error loading list:', err.message);
+      setError(`Failed to load list: ${err.message}`);
       setViewData([]);
-      return;
+      setSelectedListId(null);
     }
-
-    setViewData(rawData);
   }
 
   // --- Show delete confirmation modal ---
@@ -274,26 +281,12 @@ export default function PropertyList() {
       return;
     }
 
-    // Also delete raw CSV data from localStorage
+    // Also delete raw CSV data from backend
     try {
-      deleteRawData(listId);
+      await deleteRawData(listId);
     } catch (err) {
-      console.warn('⚠️ Failed to delete raw data:', err.message);
+      console.warn('⚠️ Failed to delete raw data from backend:', err.message);
       // Don't error — raw data deletion failure shouldn't block list deletion
-    }
-
-    // Verify deletion
-    let verifyRawData;
-    try {
-      verifyRawData = await loadRawData(listId);
-    } catch (err) {
-      // API error is expected after deletion (404)
-      verifyRawData = [];
-    }
-    if (verifyRawData && verifyRawData.length > 0) {
-      setError('List data was not fully deleted. Please try again.');
-      console.error('❌ Verification failed - raw data still exists for:', listId);
-      return;
     }
 
     // Refresh saved lists
