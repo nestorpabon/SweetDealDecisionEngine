@@ -73,12 +73,25 @@ export default async function handler(request) {
     if (method === 'PUT') {
       try {
         const body = await request.json();
-        await sql`
-          INSERT INTO property_rows (list_id, rows, updated_at)
-          VALUES (${listId}, ${JSON.stringify(body.rows)}, NOW())
-          ON CONFLICT (list_id) DO UPDATE
-            SET rows = EXCLUDED.rows, updated_at = NOW()
-        `;
+        const append = body.append === true;
+
+        if (append) {
+          // Append rows to existing record using JSONB array concatenation
+          await sql`
+            UPDATE property_rows
+            SET rows = rows || ${JSON.stringify(body.rows)}::jsonb,
+                updated_at = NOW()
+            WHERE list_id = ${listId}
+          `;
+        } else {
+          // Create or replace the record with initial rows
+          await sql`
+            INSERT INTO property_rows (list_id, rows, updated_at)
+            VALUES (${listId}, ${JSON.stringify(body.rows)}, NOW())
+            ON CONFLICT (list_id) DO UPDATE
+              SET rows = EXCLUDED.rows, updated_at = NOW()
+          `;
+        }
         return json({ ok: true });
       } catch (err) {
         console.error('[PUT /raw-data/:id] error:', err.message);

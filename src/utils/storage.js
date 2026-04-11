@@ -153,27 +153,33 @@ export function savePropertyList(list) {
   return saveItem(key, list);
 }
 
-// Save raw CSV data to backend API
-// No localStorage limit — data stored in PostgreSQL on the server
+// Save raw CSV data to backend API in chunks
+// Sends 500 rows per request to stay under Vercel's 4.5MB body limit
 export async function saveRawData(listId, data) {
-  try {
-    console.log(`💾 Uploading ${data.length} rows to backend...`);
+  const CHUNK_SIZE = 500;
+  const totalChunks = Math.ceil(data.length / CHUNK_SIZE);
+
+  console.log(`💾 Uploading ${data.length} rows to backend in ${totalChunks} chunks...`);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const chunk = data.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+    const isFirst = i === 0;
+
     const res = await fetch(`/api/raw-data/${listId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: data }),
+      body: JSON.stringify({ rows: chunk, append: !isFirst }),
     });
 
     if (!res.ok) {
-      throw new Error(`API ${res.status}: ${res.statusText}`);
+      throw new Error(`API ${res.status}: Failed on chunk ${i + 1} of ${totalChunks}`);
     }
 
-    console.log(`✅ Uploaded ${data.length} rows to backend`);
-    return true;
-  } catch (err) {
-    console.error('❌ Failed to save raw data:', err.message);
-    throw err;
+    console.log(`📦 Chunk ${i + 1}/${totalChunks} uploaded (${chunk.length} rows)`);
   }
+
+  console.log(`✅ Uploaded ${data.length} rows to backend`);
+  return true;
 }
 
 // Load raw CSV data from backend API
