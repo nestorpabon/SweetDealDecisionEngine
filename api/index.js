@@ -38,21 +38,8 @@ export default async function handler(request) {
 
   const sql = neon(process.env.DATABASE_URL);
 
-  // Ensure property_rows table exists (only on first call per instance)
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS property_rows (
-        list_id    TEXT PRIMARY KEY,
-        rows       JSONB NOT NULL DEFAULT '[]',
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
-  } catch (err) {
-    console.error('[schema] failed:', err.message);
-    return json({ error: 'Database schema error', detail: err.message }, 503);
-  }
-
   // Raw data routes: /api/raw-data/:listId
+  // Table property_rows already exists in Neon (created via schema.sql)
   const match = pathname.match(/^\/api\/raw-data\/(.+)$/);
   if (match) {
     const listId = match[1];
