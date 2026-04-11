@@ -1,23 +1,6 @@
-// Module-level schema flag — persists across warm Lambda invocations
-let initialized = false;
-
-async function ensureSchema(sql) {
-  if (initialized) return;
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS property_rows (
-        list_id    TEXT PRIMARY KEY,
-        rows       JSONB NOT NULL DEFAULT '[]',
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
-    initialized = true;
-    console.log('[schema] property_rows table ready');
-  } catch (err) {
-    console.error('[schema] failed:', err.message);
-    throw err;
-  }
-}
+// Raw CSV data API — stores property rows in Neon PostgreSQL
+// Only handles /api/raw-data/:listId and /api/health routes
+import { neon } from '@neondatabase/serverless';
 
 export default async function handler(request) {
   const CORS = {
@@ -34,25 +17,39 @@ export default async function handler(request) {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   const method = request.method;
 
-  // Health check — no DB needed
+  // Health check — tests DB connection
   if (pathname === '/api/health') {
-    return json({ status: 'ok', timestamp: new Date().toISOString() });
+    if (!process.env.DATABASE_URL) {
+      return json({ status: 'error', message: 'DATABASE_URL not set' }, 500);
+    }
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      await sql`SELECT 1`;
+      return json({ status: 'ok', timestamp: new Date().toISOString() });
+    } catch (err) {
+      return json({ status: 'error', message: err.message }, 500);
+    }
   }
 
-  // All other routes need DB
+  // All data routes need DB
   if (!process.env.DATABASE_URL) {
     return json({ error: 'DATABASE_URL not set' }, 500);
   }
 
-  // Lazy-load neon only when needed (not on every cold start)
-  let sql;
+  const sql = neon(process.env.DATABASE_URL);
+
+  // Ensure property_rows table exists (only on first call per instance)
   try {
-    const { neon } = await import('@neondatabase/serverless');
-    sql = neon(process.env.DATABASE_URL);
-    await ensureSchema(sql);
+    await sql`
+      CREATE TABLE IF NOT EXISTS property_rows (
+        list_id    TEXT PRIMARY KEY,
+        rows       JSONB NOT NULL DEFAULT '[]',
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
   } catch (err) {
-    console.error('[db] connection/schema failed:', err.message);
-    return json({ error: 'Database unavailable', detail: err.message }, 503);
+    console.error('[schema] failed:', err.message);
+    return json({ error: 'Database schema error', detail: err.message }, 503);
   }
 
   // Raw data routes: /api/raw-data/:listId
@@ -60,23 +57,25 @@ export default async function handler(request) {
   if (match) {
     const listId = match[1];
 
+    // GET — load all rows for a list
     if (method === 'GET') {
       try {
-        const rows = await sql`SELECT rows FROM property_rows WHERE list_id = ${listId}`;
-        return json({ data: rows[0]?.rows ?? [] });
+        const result = await sql`SELECT rows FROM property_rows WHERE list_id = ${listId}`;
+        return json({ data: result[0]?.rows ?? [] });
       } catch (err) {
-        console.error('[GET /raw-data/:id] error:', err.message);
+        console.error('[GET] error:', err.message);
         return json({ error: 'Failed to load data' }, 500);
       }
     }
 
+    // PUT — save rows (with optional append mode for chunked uploads)
     if (method === 'PUT') {
       try {
         const body = await request.json();
         const append = body.append === true;
 
         if (append) {
-          // Append rows to existing record using JSONB array concatenation
+          // Append rows to existing record
           await sql`
             UPDATE property_rows
             SET rows = rows || ${JSON.stringify(body.rows)}::jsonb,
@@ -84,7 +83,7 @@ export default async function handler(request) {
             WHERE list_id = ${listId}
           `;
         } else {
-          // Create or replace the record with initial rows
+          // Create or replace the record
           await sql`
             INSERT INTO property_rows (list_id, rows, updated_at)
             VALUES (${listId}, ${JSON.stringify(body.rows)}, NOW())
@@ -94,17 +93,18 @@ export default async function handler(request) {
         }
         return json({ ok: true });
       } catch (err) {
-        console.error('[PUT /raw-data/:id] error:', err.message);
+        console.error('[PUT] error:', err.message);
         return json({ error: 'Failed to save data' }, 500);
       }
     }
 
+    // DELETE — remove all rows for a list
     if (method === 'DELETE') {
       try {
         await sql`DELETE FROM property_rows WHERE list_id = ${listId}`;
         return json({ ok: true });
       } catch (err) {
-        console.error('[DELETE /raw-data/:id] error:', err.message);
+        console.error('[DELETE] error:', err.message);
         return json({ error: 'Failed to delete data' }, 500);
       }
     }
