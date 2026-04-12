@@ -17,15 +17,29 @@ export default async function handler(request) {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   const method = request.method;
 
-  // Health check — tests DB connection
+  // Health check — /api/health returns basic status, /api/health?db=1 tests DB
   if (pathname === '/api/health') {
+    const url = new URL(request.url, 'http://localhost');
+    const testDb = url.searchParams.get('db');
+
+    // Basic health (no DB) — verifies function is running
+    if (!testDb) {
+      return json({
+        status: 'ok',
+        hasDbUrl: !!process.env.DATABASE_URL,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // DB health — tests actual connection
     if (!process.env.DATABASE_URL) {
       return json({ status: 'error', message: 'DATABASE_URL not set' }, 500);
     }
     try {
       const sql = neon(process.env.DATABASE_URL);
+      const start = Date.now();
       await sql`SELECT 1`;
-      return json({ status: 'ok', timestamp: new Date().toISOString() });
+      return json({ status: 'ok', dbMs: Date.now() - start, timestamp: new Date().toISOString() });
     } catch (err) {
       return json({ status: 'error', message: err.message }, 500);
     }
